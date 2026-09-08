@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>主管指标看板 • 优化版</title>
+<meta name="rev" content="202609090348">
+<script src="chart.umd.min.js"></script>
+<style>
+/* ===== 主题变量 ===== */
+:root{
+  --bg:#f4f6fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+  --primary:#2563eb; --secondary:#06b6d4; --border:#e5e7eb;
+  --pos:#e23c3c; --neg:#1f9d55; --shadow:0 6px 20px rgba(20,40,80,.08);
+  --accent-soft:rgba(37,99,235,.12);
+  --title-blue:#1e40af; /* 卡片标题深蓝（用户指定） */
+  /* ===== 字号令牌：美化提速•单一来源 =====
+     方阵卡片：标题(--fs-matrix-title) : 其余(--fs-matrix-body) = 20:15
+     明细卡片：标题/表头/正文三档；改令牌即全局生效，无需满文件找字号。 */
+  --fs-matrix-title:20px;
+  --fs-matrix-body:15px;
+  --fs-card-title:13px;
+  --fs-card-head:11px;
+  --fs-card-body:11.5px;
+}
+body.theme-tech{--bg:#eef2fb;--card:#ffffff;--text:#16243b;--muted:#5b6b86;--primary:#2563eb;--secondary:#06b6d4;--border:#dbe4f3;--pos:#e23c3c;--neg:#1f9d55;--accent-soft:rgba(37,99,235,.12);}
+body.theme-redgold{--bg:#fbf6f0;--card:#ffffff;--text:#3a2a1c;--muted:#8a6f57;--primary:#c0392b;--secondary:#d4af37;--border:#f0dcc8;--pos:#c0392b;--neg:#1f9d55;--accent-soft:rgba(192,57,43,.10);}
+body.theme-green{--bg:#f1faf5;--card:#ffffff;--text:#173a2c;--muted:#5f7d6c;--primary:#059669;--secondary:#10b981;--border:#d4ecdf;--pos:#e23c3c;--neg:#1f9d55;--accent-soft:rgba(5,150,105,.12);}
+body.theme-dark{--bg:#0b1220;--card:#15203a;--text:#e6edf7;--muted:#93a4c0;--primary:#38bdf8;--secondary:#a78bfa;--border:#243352;--pos:#fb7185;--neg:#34d399;--accent-soft:rgba(56,189,248,.16);--shadow:0 8px 28px rgba(0,0,0,.45);--title-blue:#82a9ff;}
+body.theme-gray{--bg:#f5f6f8;--card:#ffffff;--text:#2b2f36;--muted:#7c828c;--primary:#475569;--secondary:#94a3b8;--border:#e6e8ec;--pos:#e23c3c;--neg:#1f9d55;--accent-soft:rgba(71,85,105,.10);}
+body.theme-antgold{--bg:#141414;--card:#1f1f1f;--text:rgba(255,255,255,.88);--muted:rgba(255,255,255,.50);--primary:#faad14;--secondary:#ffc53d;--border:#434343;--pos:#ff4d4f;--neg:#52c41a;--accent-soft:rgba(250,173,20,.14);--shadow:0 8px 28px rgba(0,0,0,.55);--title-blue:#faad14;}
+body.theme-antgold .tab-btn.active,body.theme-antgold .mode-btn.active{color:#141414;}
+
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;background:var(--bg);color:var(--text);transition:background .35s,color .35s;padding:0 0 40px;}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 28px;background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow);}
+.title-wrap h1{margin:0;font-size:22px;letter-spacing:.5px;}
+.title-wrap p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+.top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.theme-switch{display:flex;gap:8px;flex-wrap:wrap;}
+.theme-btn{cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);padding:7px 14px;border-radius:999px;font-size:13px;transition:.2s;display:flex;align-items:center;gap:6px;}
+.theme-btn:hover{transform:translateY(-1px);}
+.theme-btn .dot{width:10px;height:10px;border-radius:50%;}
+.theme-btn.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--accent-soft);font-weight:600;}
+.print-btn{cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);padding:7px 14px;border-radius:999px;font-size:13px;}
+.print-btn:hover{border-color:var(--primary);}
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px;}
+
+.section-title{font-size:16px;font-weight:800;margin:28px 0 6px;display:flex;align-items:center;gap:9px;}
+.section-title::before{content:"";width:5px;height:18px;border-radius:3px;background:var(--primary);}
+.section-desc{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.7;}
+
+/* ===== 系统指标 ===== */
+.sys-cat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px 18px;box-shadow:var(--shadow);margin-bottom:16px;}
+.sys-cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--border);}
+.sys-cat-title{font-size:15px;font-weight:800;}
+.sys-cat-count{font-size:12px;color:var(--muted);background:var(--accent-soft);padding:3px 10px;border-radius:999px;font-weight:600;}
+/* ===== 字号规则（本轮优化•5:3）=====
+   标题 .ib-name … 深蓝(var(--title-blue))、25px、800、居中
+   其余所有文字（列头/行标签/数值/同比/标签/徽标）统一 15px，靠颜色（主色/红涨绿跌）区分信号，避免眼花缭乱。
+   标题:其余 = 25:15 = 5:3。 */
+.sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.ind-box{position:relative;background:var(--bg);border:1px solid var(--border);border-radius:13px;padding:14px 15px 13px;overflow:hidden;transition:.2s;}
+.ind-box:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--primary);}
+.ib-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;}
+.ib-name{font-size:var(--fs-card-title);font-weight:700;line-height:1.3;color:var(--title-blue);}
+.ib-tag{font-size:var(--fs-matrix-body);padding:3px 10px;border-radius:6px;font-weight:600;white-space:nowrap;}
+.ib-tag.count{background:var(--accent-soft);color:var(--primary);}
+.ib-tag.ratio{background:rgba(217,119,6,.14);color:#b45309;}
+.ib-tag.cum{background:rgba(31,157,85,.14);color:#1f9d55;}
+.ib-vals{display:flex;gap:12px;align-items:flex-end;}
+.ib-val{flex:1;}
+.ib-vlabel{display:block;font-size:18px;color:var(--muted);margin-bottom:2px;}
+.ib-vnum{font-size:18px;font-weight:700;line-height:1.1;color:var(--text);}
+.ib-vnum.accent{font-size:18px;font-weight:800;color:var(--primary);}
+.ratio-line{margin-top:9px;font-size:11.5px;color:var(--muted);line-height:1.5;}
+.ratio-line b{color:var(--text);font-weight:700;}
+.rl-main{margin-bottom:3px;}
+.rl-yoy{margin-top:0;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+.rl-yoy.up{color:var(--pos);}
+.rl-yoy.down{color:var(--neg);}
+.rl-yoy.flat{color:var(--muted);}
+.ib-yoy{margin-top:10px;font-size:18px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+.ib-yoy.up{color:var(--pos);}
+.ib-yoy.down{color:var(--neg);}
+.ib-yoy.flat{color:var(--muted);}
+
+/* 上升/下降三角形：明确红涨绿跌，加粗区分 */
+.ar-up{color:var(--pos);font-weight:900;}
+.ar-down{color:var(--neg);font-weight:900;}
+.ar-flat{color:var(--muted);}
+
+/* ===== C人力方阵卡片 ===== */
+.ind-box.c-matrix{display:flex;flex-direction:column;}
+.c-matrix .ib-head{justify-content:center;position:relative;margin-bottom:8px;}
+.c-matrix .ib-name{font-size:var(--fs-matrix-title);font-weight:800;text-align:center;flex:none;line-height:1.25;}
+.c-matrix .ib-tag{position:absolute;right:0;top:0;}
+/* 方阵卡片：无表格线，除标题外字号统一 18px，靠间距与颜色区分 */
+.c-grid{display:grid;grid-template-columns:64px 1fr 1fr;gap:7px 10px;margin-top:6px;}
+.c-grid > div{padding:4px 4px;text-align:center;display:flex;align-items:center;justify-content:center;font-size:var(--fs-matrix-body);}
+.cg-corner{font-weight:700;color:var(--muted);}
+.cg-h{font-weight:700;color:var(--muted);}
+.cg-r{font-weight:700;color:var(--muted);justify-content:flex-start !important;padding-left:2px;}
+.cg-v{font-weight:700;color:var(--text);}
+.cg-v.accent{color:var(--primary);}
+.cg-v.up{color:var(--pos);}
+.cg-v.down{color:var(--neg);}
+.cg-v.flat{color:var(--muted);}
+/* 月均主管人力方阵变体：标题20px居中、其余15px、2列（维度|绝对值） */
+.c-grid.cg-2col{grid-template-columns:64px 1fr;}
+.c-matrix.yj .ib-name{font-size:var(--fs-matrix-title);}
+.c-matrix.yj .c-grid>div{font-size:var(--fs-matrix-body);}
+
+/* ===== 分公司对比 ===== */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.tab-btn{cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);padding:9px 18px;border-radius:10px;font-size:14px;font-weight:600;transition:.2s;}
+.tab-btn:hover{transform:translateY(-1px);}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.sel{appearance:none;border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;}
+.mode-group{border:1px solid var(--border);border-radius:9px;overflow:hidden;display:inline-flex;}
+.mode-btn{cursor:pointer;border:none;background:var(--card);color:var(--text);padding:8px 14px;font-size:13px;font-weight:600;}
+.mode-btn.active{background:var(--secondary);color:#fff;}
+.compare-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px 10px;box-shadow:var(--shadow);}
+.compare-card h3{margin:0 0 4px;font-size:15px;}
+.compare-card .hint{font-size:12px;color:var(--muted);margin:0 0 8px;}
+.canvas-box{position:relative;height:360px;}
+.legend-inline{font-size:12px;color:var(--muted);margin:6px 0 0;display:flex;gap:16px;flex-wrap:wrap;}
+.legend-inline .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+.legend-inline .up{color:var(--pos);font-weight:700;}
+.legend-inline .down{color:var(--neg);font-weight:700;}
+
+/* ===== 明细表 ===== */
+.table-card{margin-top:6px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:8px 6px;box-shadow:var(--shadow);overflow:auto;}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:1180px;}
+th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+th{position:sticky;top:0;background:var(--card);color:var(--muted);font-weight:700;z-index:3;}
+td.name,th.name{text-align:left;position:sticky;left:0;background:var(--card);font-weight:600;z-index:2;}
+th.name{z-index:4;}
+tr.total td{font-weight:800;background:var(--accent-soft);}
+td .up{color:var(--pos);font-weight:700;}
+td .down{color:var(--neg);font-weight:700;}
+td .flat{color:var(--muted);}
+/* 分组头：左侧主色条 + 强背景 */
+.cat-block td.group-head{background:var(--bg);font-weight:800;color:var(--text);text-align:left;padding-left:12px;border-left:4px solid var(--primary);}
+/* 行层次：25年淡主色、同比淡灰、悬停高亮 */
+.row-25 td{background:color-mix(in srgb,var(--primary) 7%, var(--card));}
+.row-yoy td{background:color-mix(in srgb,var(--muted) 6%, var(--card));}
+tbody tr:hover td{background:color-mix(in srgb,var(--primary) 11%, var(--card));}
+/* 合计列高亮 */
+td.total-col,th.total-col{background:color-mix(in srgb,var(--primary) 12%, var(--card));font-weight:700;color:var(--text);}
+/* 明细表按类分块 + 外框层次 */
+.cat-block td{border-left:1.5px solid var(--border);border-right:1.5px solid var(--border);}
+.cat-block tr.cat-head td{border-top:2.5px solid var(--primary);background:color-mix(in srgb,var(--primary) 9%, var(--card));font-weight:800;color:var(--text);text-align:left;padding-left:14px;font-size:13px;}
+.cat-block tr:last-child td{border-bottom:2.5px solid var(--border);}
+.cat-head .cat-cnt{float:right;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--card);padding:1px 9px;border-radius:999px;border:1px solid var(--border);}
+.cat-gap td{border:none;height:9px;padding:0;background:transparent;}
+.gh-tag{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--accent-soft);color:var(--primary);margin-left:6px;}
+.code{font-weight:400;font-size:11px;color:var(--muted);}
+.note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8;}
+.note b{color:var(--text);}
+
+/* ===== 完整明细 • 方案③ 卡片分组（转置：行=24年/25年/同比，列=分公司） ===== */
+.cat-sec{margin-bottom:18px;}
+.cat-sec-head{font-size:15px;font-weight:800;margin:14px 0 10px;display:flex;align-items:center;gap:9px;}
+.cat-sec-head::before{content:"";width:5px;height:18px;border-radius:3px;background:var(--primary);}
+.cat-sec-head .cat-cnt{font-size:11.5px;color:var(--muted);background:var(--accent-soft);padding:2px 9px;border-radius:999px;font-weight:600;}
+.card-grid{margin-bottom:4px;}
+.ic-scroll{overflow-x:auto;}
+.ind-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px 6px;box-shadow:var(--shadow);}
+.ic-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border);}
+.ic-name{font-size:var(--fs-card-title);font-weight:700;color:var(--title-blue);}
+.ic-tbl{border-collapse:collapse;width:100%;font-size:var(--fs-card-body);white-space:nowrap;min-width:auto;}
+.ic-tbl th{background:var(--bg);color:var(--muted);font-weight:700;padding:5px 6px;font-size:var(--fs-card-head);}
+.ic-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid var(--border);}
+.ic-tbl td.bn{text-align:left;font-weight:600;}
+.ic-tbl td.accent{color:var(--primary);font-weight:700;}
+.ic-tbl td.up{color:var(--pos);font-weight:700;}
+.ic-tbl td.down{color:var(--neg);font-weight:700;}
+.ic-tbl td.flat{color:var(--muted);}
+.ic-tbl .total-col{background:color-mix(in srgb,var(--primary) 12%, var(--card));font-weight:700;}
+/* 合并卡：人数组与占比组之间加分隔；标签高亮 */
+.ic-tbl tr.grp-sep td{border-top:2px solid var(--border);}
+.merged-card .gh-tag{color:var(--primary);background:var(--accent-soft);border:1px solid var(--accent-soft);}
+
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px;}
+@media(max-width:980px){.sys-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:620px){.sys-grid{grid-template-columns:repeat(1,1fr);}.canvas-box{height:300px;}}
+@media print{.topbar{position:static;box-shadow:none;}.theme-switch,.print-btn,.controls,.tabs{display:none;}
+  body{background:#fff;}
+  .ic-scroll{overflow:visible;}
+  table{min-width:auto !important;}
+  .ind-card,.table-card,.cat-sec,.sys-cat,.sys-grid{break-inside:avoid;}
+  .ind-card{box-shadow:none;}
+}
+</style>
+</head>
+<body class="theme-dark">
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>主管指标看板 • 优化版</h1>
+  </div>
+  <div class="top-actions">
+    <div class="theme-switch" id="themeSwitch"></div>
+    <button class="print-btn" id="btnPdf" onclick="window.print()">导出高保真PDF</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- 一、系统指标 -->
+  <div class="section-title">一、系统指标</div>
+  <div id="sysWrap"></div>
+
+  <!-- 二、分公司指标 -->
+  <div class="section-title">二、分公司指标</div>
+  <div class="tabs" id="tabs">
+    <div class="tab-btn active" data-cat="月均人力">月均人力</div>
+    <div class="tab-btn" data-cat="各C人力">各C人力</div>
+    <div class="tab-btn" data-cat="各期交人力">各期交人力</div>
+  </div>
+  <div class="controls">
+    <select class="sel" id="selInd"></select>
+    <div class="mode-group" id="modeToggle" style="display:none">
+      <button class="mode-btn active" data-mode="count">人数</button>
+      <button class="mode-btn" data-mode="ratio">占比</button>
+    </div>
+  </div>
+  <div class="compare-card">
+    <h3 id="cmpTitle">月均主管人力</h3>
+    <p class="hint" id="cmpHint">单位：人/月（年内各月平均）• 柱=24年/25年人数，折线=同比</p>
+    <div class="canvas-box"><canvas id="cmpChart"></canvas></div>
+    <div class="legend-inline">
+      <span><span class="sw" id="lg24" style="background:var(--primary)"></span>2024年</span>
+      <span><span class="sw" id="lg25" style="background:var(--secondary)"></span>2025年</span>
+      <span><span class="sw" style="background:#eab308"></span>同比（点：<span class="up">红=增</span>/<span class="down">绿=降</span>）</span>
+    </div>
+  </div>
+
+  <!-- 三、完整明细 -->
+  <div class="section-title">三、完整明细</div>
+  <div class="table-card"><div id="detail"></div></div>
+
+</div>
+
+<script>
+const DATA = {
+  "branches": [
+    {
+      "name": "山东",
+      "code": "8004",
+      "row": 3
+    },
+    {
+      "name": "广东",
+      "code": "8010",
+      "row": 4
+    },
+    {
+      "name": "青岛",
+      "code": "8006",
+      "row": 5
+    },
+    {
+      "name": "江苏",
+      "code": "8009",
+      "row": 6
+    },
+    {
+      "name": "北京",
+      "code": "8001",
+      "row": 7
+    },
+    {
+      "name": "上海",
+      "code": "8002",
+      "row": 8
+    },
+    {
+      "name": "河北",
+      "code": "8005",
+      "row": 9
+    },
+    {
+      "name": "吉林",
+      "code": "8007",
+      "row": 10
+    },
+    {
+      "name": "河南",
+      "code": "8003",
+      "row": 11
+    },
+    {
+      "name": "四川",
+      "code": "8008",
+      "row": 12
+    },
+    {
+      "name": "合计",
+      "code": null,
+      "row": 13
+    }
+  ],
+  "indicators": [
+    {
+      "idx": 1,
+      "key": "ind1",
+      "name": "月均主管人力",
+      "cat": "月均人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 1000,
+          "v25": 651.4285714285714,
+          "yoy": -0.1064079952968842
+        },
+        "广东": {
+          "v24": 16,
+          "v25": 15,
+          "yoy": -0.0625
+        },
+        "青岛": {
+          "v24": 133,
+          "v25": 160.7142857142857,
+          "yoy": 0.2083780880773363
+        },
+        "江苏": {
+          "v24": 194.4285714285714,
+          "v25": 178.8571428571429,
+          "yoy": -0.08008817046289485
+        },
+        "北京": {
+          "v24": 16.14285714285714,
+          "v25": 11.28571428571429,
+          "yoy": -0.3008849557522123
+        },
+        "上海": {
+          "v24": 70.14285714285714,
+          "v25": 63.14285714285715,
+          "yoy": -0.09979633401221986
+        },
+        "河北": {
+          "v24": 739.5714285714286,
+          "v25": 671.5714285714286,
+          "yoy": -0.09194514197411628
+        },
+        "吉林": {
+          "v24": 283.5714285714286,
+          "v25": 232.2857142857143,
+          "yoy": -0.1808564231738035
+        },
+        "河南": {
+          "v24": 464,
+          "v25": 448.8571428571428,
+          "yoy": -0.03263546798029562
+        },
+        "四川": {
+          "v24": 140,
+          "v25": 139,
+          "yoy": -0.007142857142857143
+        },
+        "合计": {
+          "v24": 3056.8571428571427,
+          "v25": 2572.142857142857,
+          "yoy": -0.0767140146659146
+        }
+      }
+    },
+    {
+      "idx": 2,
+      "key": "ind2",
+      "name": "月均1500C人力",
+      "cat": "各C人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 376.2857142857143,
+          "v25": 398.1428571428572,
+          "yoy": 0.05808656036446478
+        },
+        "广东": {
+          "v24": 11.57142857142857,
+          "v25": 7.714285714285714,
+          "yoy": -0.3333333333333333
+        },
+        "青岛": {
+          "v24": 87,
+          "v25": 91,
+          "yoy": 0.04597701149425287
+        },
+        "江苏": {
+          "v24": 100,
+          "v25": 99.28571428571429,
+          "yoy": -0.007142857142857082
+        },
+        "北京": {
+          "v24": 8.857142857142858,
+          "v25": 6.285714285714286,
+          "yoy": -0.2903225806451614
+        },
+        "上海": {
+          "v24": 40,
+          "v25": 47.28571428571428,
+          "yoy": 0.1821428571428571
+        },
+        "河北": {
+          "v24": 411.5714285714286,
+          "v25": 364.8571428571428,
+          "yoy": -0.1135022561610552
+        },
+        "吉林": {
+          "v24": 152,
+          "v25": 136.2857142857143,
+          "yoy": -0.1033834586466166
+        },
+        "河南": {
+          "v24": 209.5714285714286,
+          "v25": 211.7142857142857,
+          "yoy": 0.0102249488752556
+        },
+        "四川": {
+          "v24": 78.71428571428571,
+          "v25": 83,
+          "yoy": 0.05444646098003638
+        },
+        "合计": {
+          "v24": 1475.571428571429,
+          "v25": 1445.571428571429,
+          "yoy": -0.02033110659308742
+        }
+      },
+      "ratioRef": "ind3",
+      "ratio": {
+        "山东": {
+          "v24": 0.516166960611405,
+          "v25": 0.6111842105263158,
+          "yoy": 0.09501724991491078
+        },
+        "广东": {
+          "v24": 0.7232142857142857,
+          "v25": 0.5142857142857143,
+          "yoy": -0.2089285714285714
+        },
+        "青岛": {
+          "v24": 0.6541353383458647,
+          "v25": 0.5662222222222222,
+          "yoy": -0.0879131161236425
+        },
+        "江苏": {
+          "v24": 0.5143277002204262,
+          "v25": 0.555111821086262,
+          "yoy": 0.04078412086583583
+        },
+        "北京": {
+          "v24": 0.5486725663716815,
+          "v25": 0.5569620253164557,
+          "yoy": 0.008289458944774175
+        },
+        "上海": {
+          "v24": 0.5702647657841141,
+          "v25": 0.7488687782805429,
+          "yoy": 0.1786040124964288
+        },
+        "河北": {
+          "v24": 0.5564999034189685,
+          "v25": 0.5432886619868112,
+          "yoy": -0.01321124143215724
+        },
+        "吉林": {
+          "v24": 0.5360201511335013,
+          "v25": 0.5867158671586715,
+          "yoy": 0.0506957160251702
+        },
+        "河南": {
+          "v24": 0.4516625615763547,
+          "v25": 0.4716740929344367,
+          "yoy": 0.02001153135808198
+        },
+        "四川": {
+          "v24": 0.5622448979591836,
+          "v25": 0.5971223021582733,
+          "yoy": 0.03487740419908969
+        },
+        "合计": {
+          "v24": 0.5296651453771603,
+          "v25": 0.5620105526242711,
+          "yoy": 0.03234540724711088
+        }
+      }
+    },
+    {
+      "idx": 3,
+      "key": "ind3",
+      "name": "月均1500C人力占比",
+      "cat": "各C人力",
+      "type": "ratio",
+      "data": {
+        "山东": {
+          "v24": 0.516166960611405,
+          "v25": 0.6111842105263158,
+          "yoy": 0.09501724991491078
+        },
+        "广东": {
+          "v24": 0.7232142857142857,
+          "v25": 0.5142857142857143,
+          "yoy": -0.2089285714285714
+        },
+        "青岛": {
+          "v24": 0.6541353383458647,
+          "v25": 0.5662222222222222,
+          "yoy": -0.0879131161236425
+        },
+        "江苏": {
+          "v24": 0.5143277002204262,
+          "v25": 0.555111821086262,
+          "yoy": 0.04078412086583583
+        },
+        "北京": {
+          "v24": 0.5486725663716815,
+          "v25": 0.5569620253164557,
+          "yoy": 0.008289458944774175
+        },
+        "上海": {
+          "v24": 0.5702647657841141,
+          "v25": 0.7488687782805429,
+          "yoy": 0.1786040124964288
+        },
+        "河北": {
+          "v24": 0.5564999034189685,
+          "v25": 0.5432886619868112,
+          "yoy": -0.01321124143215724
+        },
+        "吉林": {
+          "v24": 0.5360201511335013,
+          "v25": 0.5867158671586715,
+          "yoy": 0.0506957160251702
+        },
+        "河南": {
+          "v24": 0.4516625615763547,
+          "v25": 0.4716740929344367,
+          "yoy": 0.02001153135808198
+        },
+        "四川": {
+          "v24": 0.5622448979591836,
+          "v25": 0.5971223021582733,
+          "yoy": 0.03487740419908969
+        },
+        "合计": {
+          "v24": 0.5296651453771603,
+          "v25": 0.5620105526242711,
+          "yoy": 0.03234540724711088
+        }
+      }
+    },
+    {
+      "idx": 4,
+      "key": "ind4",
+      "name": "月均3000C人力",
+      "cat": "各C人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 276.7142857142857,
+          "v25": 301.2857142857143,
+          "yoy": 0.08879710893133706
+        },
+        "广东": {
+          "v24": 9,
+          "v25": 7,
+          "yoy": -0.2222222222222222
+        },
+        "青岛": {
+          "v24": 72.14285714285714,
+          "v25": 73.42857142857143,
+          "yoy": 0.01782178217821791
+        },
+        "江苏": {
+          "v24": 68,
+          "v25": 70.57142857142857,
+          "yoy": 0.03781512605042014
+        },
+        "北京": {
+          "v24": 7.714285714285714,
+          "v25": 5.857142857142857,
+          "yoy": -0.2407407407407408
+        },
+        "上海": {
+          "v24": 31.85714285714286,
+          "v25": 42.85714285714285,
+          "yoy": 0.3452914798206277
+        },
+        "河北": {
+          "v24": 267.7142857142857,
+          "v25": 245.1428571428571,
+          "yoy": -0.0843116328708645
+        },
+        "吉林": {
+          "v24": 126.4285714285714,
+          "v25": 117.5714285714286,
+          "yoy": -0.07005649717514127
+        },
+        "河南": {
+          "v24": 143.4285714285714,
+          "v25": 137.1428571428571,
+          "yoy": -0.04382470119521907
+        },
+        "四川": {
+          "v24": 55.42857142857143,
+          "v25": 60.42857142857143,
+          "yoy": 0.09020618556701031
+        },
+        "合计": {
+          "v24": 1058.428571428571,
+          "v25": 1061.285714285714,
+          "yoy": 0.002699419624780703
+        }
+      },
+      "ratioRef": "ind5",
+      "ratio": {
+        "山东": {
+          "v24": 0.3795806388398981,
+          "v25": 0.4625,
+          "yoy": 0.08291936116010185
+        },
+        "广东": {
+          "v24": 0.5625,
+          "v25": 0.4666666666666667,
+          "yoy": -0.09583333333333333
+        },
+        "青岛": {
+          "v24": 0.5424274973147153,
+          "v25": 0.4568888888888889,
+          "yoy": -0.08553860842582639
+        },
+        "江苏": {
+          "v24": 0.3497428361498898,
+          "v25": 0.3945686900958466,
+          "yoy": 0.04482585394595678
+        },
+        "北京": {
+          "v24": 0.4778761061946903,
+          "v25": 0.5189873417721518,
+          "yoy": 0.04111123557746149
+        },
+        "上海": {
+          "v24": 0.4541751527494909,
+          "v25": 0.6787330316742081,
+          "yoy": 0.2245578789247172
+        },
+        "河北": {
+          "v24": 0.3619857060073402,
+          "v25": 0.3650287172941927,
+          "yoy": 0.003043011286852526
+        },
+        "吉林": {
+          "v24": 0.4458438287153653,
+          "v25": 0.506150061500615,
+          "yoy": 0.06030623278524977
+        },
+        "河南": {
+          "v24": 0.3091133004926108,
+          "v25": 0.305537873965627,
+          "yoy": -0.003575426526983838
+        },
+        "四川": {
+          "v24": 0.3959183673469388,
+          "v25": 0.4347379239465571,
+          "yoy": 0.03881955659961828
+        },
+        "合计": {
+          "v24": 0.379929234398236,
+          "v25": 0.4126076089975007,
+          "yoy": 0.0326783745992647
+        }
+      }
+    },
+    {
+      "idx": 5,
+      "key": "ind5",
+      "name": "月均3000C人力占比",
+      "cat": "各C人力",
+      "type": "ratio",
+      "data": {
+        "山东": {
+          "v24": 0.3795806388398981,
+          "v25": 0.4625,
+          "yoy": 0.08291936116010185
+        },
+        "广东": {
+          "v24": 0.5625,
+          "v25": 0.4666666666666667,
+          "yoy": -0.09583333333333333
+        },
+        "青岛": {
+          "v24": 0.5424274973147153,
+          "v25": 0.4568888888888889,
+          "yoy": -0.08553860842582639
+        },
+        "江苏": {
+          "v24": 0.3497428361498898,
+          "v25": 0.3945686900958466,
+          "yoy": 0.04482585394595678
+        },
+        "北京": {
+          "v24": 0.4778761061946903,
+          "v25": 0.5189873417721518,
+          "yoy": 0.04111123557746149
+        },
+        "上海": {
+          "v24": 0.4541751527494909,
+          "v25": 0.6787330316742081,
+          "yoy": 0.2245578789247172
+        },
+        "河北": {
+          "v24": 0.3619857060073402,
+          "v25": 0.3650287172941927,
+          "yoy": 0.003043011286852526
+        },
+        "吉林": {
+          "v24": 0.4458438287153653,
+          "v25": 0.506150061500615,
+          "yoy": 0.06030623278524977
+        },
+        "河南": {
+          "v24": 0.3091133004926108,
+          "v25": 0.305537873965627,
+          "yoy": -0.003575426526983838
+        },
+        "四川": {
+          "v24": 0.3959183673469388,
+          "v25": 0.4347379239465571,
+          "yoy": 0.03881955659961828
+        },
+        "合计": {
+          "v24": 0.379929234398236,
+          "v25": 0.4126076089975007,
+          "yoy": 0.0326783745992647
+        }
+      }
+    },
+    {
+      "idx": 6,
+      "key": "ind6",
+      "name": "月均6000C人力",
+      "cat": "各C人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 151.8571428571429,
+          "v25": 158.1428571428571,
+          "yoy": 0.04139228598306674
+        },
+        "广东": {
+          "v24": 8.142857142857142,
+          "v25": 4.857142857142857,
+          "yoy": -0.4035087719298246
+        },
+        "青岛": {
+          "v24": 47.85714285714285,
+          "v25": 45.57142857142857,
+          "yoy": -0.04776119402985073
+        },
+        "江苏": {
+          "v24": 39.42857142857143,
+          "v25": 38.71428571428572,
+          "yoy": -0.01811594202898553
+        },
+        "北京": {
+          "v24": 6.857142857142857,
+          "v25": 4.857142857142857,
+          "yoy": -0.2916666666666667
+        },
+        "上海": {
+          "v24": 24.71428571428572,
+          "v25": 29.85714285714286,
+          "yoy": 0.2080924855491329
+        },
+        "河北": {
+          "v24": 139.5714285714286,
+          "v25": 138.7142857142857,
+          "yoy": -0.006141248720573212
+        },
+        "吉林": {
+          "v24": 54.28571428571428,
+          "v25": 52.57142857142857,
+          "yoy": -0.03157894736842107
+        },
+        "河南": {
+          "v24": 72.14285714285714,
+          "v25": 73,
+          "yoy": 0.01188118811881194
+        },
+        "四川": {
+          "v24": 32.42857142857143,
+          "v25": 32.28571428571428,
+          "yoy": -0.004405286343612428
+        },
+        "合计": {
+          "v24": 577.2857142857143,
+          "v25": 578.5714285714286,
+          "yoy": 0.002227171492204787
+        }
+      },
+      "ratioRef": "ind7",
+      "ratio": {
+        "山东": {
+          "v24": 0.2083088379384676,
+          "v25": 0.2427631578947368,
+          "yoy": 0.03445431995626924
+        },
+        "广东": {
+          "v24": 0.5089285714285714,
+          "v25": 0.3238095238095238,
+          "yoy": -0.1851190476190476
+        },
+        "青岛": {
+          "v24": 0.359828141783029,
+          "v25": 0.2835555555555555,
+          "yoy": -0.07627258622747346
+        },
+        "江苏": {
+          "v24": 0.2027920646583395,
+          "v25": 0.2164536741214058,
+          "yoy": 0.01366160946306627
+        },
+        "北京": {
+          "v24": 0.4247787610619469,
+          "v25": 0.430379746835443,
+          "yoy": 0.005600985773496103
+        },
+        "上海": {
+          "v24": 0.3523421588594705,
+          "v25": 0.4728506787330317,
+          "yoy": 0.1205085198735611
+        },
+        "河北": {
+          "v24": 0.1887193355225034,
+          "v25": 0.2065517974898958,
+          "yoy": 0.01783246196739238
+        },
+        "吉林": {
+          "v24": 0.1914357682619647,
+          "v25": 0.2263222632226322,
+          "yoy": 0.03488649496066748
+        },
+        "河南": {
+          "v24": 0.1554802955665024,
+          "v25": 0.1626352641629535,
+          "yoy": 0.007154968596451095
+        },
+        "四川": {
+          "v24": 0.2316326530612245,
+          "v25": 0.2322713257965056,
+          "yoy": 0.0006386727352811483
+        },
+        "合计": {
+          "v24": 0.207220142556792,
+          "v25": 0.2249375173562899,
+          "yoy": 0.01771737479949795
+        }
+      }
+    },
+    {
+      "idx": 7,
+      "key": "ind7",
+      "name": "月均6000C人力占比",
+      "cat": "各C人力",
+      "type": "ratio",
+      "data": {
+        "山东": {
+          "v24": 0.2083088379384676,
+          "v25": 0.2427631578947368,
+          "yoy": 0.03445431995626924
+        },
+        "广东": {
+          "v24": 0.5089285714285714,
+          "v25": 0.3238095238095238,
+          "yoy": -0.1851190476190476
+        },
+        "青岛": {
+          "v24": 0.359828141783029,
+          "v25": 0.2835555555555555,
+          "yoy": -0.07627258622747346
+        },
+        "江苏": {
+          "v24": 0.2027920646583395,
+          "v25": 0.2164536741214058,
+          "yoy": 0.01366160946306627
+        },
+        "北京": {
+          "v24": 0.4247787610619469,
+          "v25": 0.430379746835443,
+          "yoy": 0.005600985773496103
+        },
+        "上海": {
+          "v24": 0.3523421588594705,
+          "v25": 0.4728506787330317,
+          "yoy": 0.1205085198735611
+        },
+        "河北": {
+          "v24": 0.1887193355225034,
+          "v25": 0.2065517974898958,
+          "yoy": 0.01783246196739238
+        },
+        "吉林": {
+          "v24": 0.1914357682619647,
+          "v25": 0.2263222632226322,
+          "yoy": 0.03488649496066748
+        },
+        "河南": {
+          "v24": 0.1554802955665024,
+          "v25": 0.1626352641629535,
+          "yoy": 0.007154968596451095
+        },
+        "四川": {
+          "v24": 0.2316326530612245,
+          "v25": 0.2322713257965056,
+          "yoy": 0.0006386727352811483
+        },
+        "合计": {
+          "v24": 0.207220142556792,
+          "v25": 0.2249375173562899,
+          "yoy": 0.01771737479949795
+        }
+      }
+    },
+    {
+      "idx": 8,
+      "key": "ind8",
+      "name": "月均10000C人力",
+      "cat": "各C人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 76.28571428571429,
+          "v25": 82.57142857142857,
+          "yoy": 0.08239700374531823
+        },
+        "广东": {
+          "v24": 6.142857142857143,
+          "v25": 3.428571428571428,
+          "yoy": -0.4418604651162791
+        },
+        "青岛": {
+          "v24": 31,
+          "v25": 29.28571428571428,
+          "yoy": -0.05529953917050694
+        },
+        "江苏": {
+          "v24": 22.71428571428572,
+          "v25": 25.28571428571428,
+          "yoy": 0.1132075471698112
+        },
+        "北京": {
+          "v24": 5.714285714285714,
+          "v25": 4.285714285714286,
+          "yoy": -0.2500000000000001
+        },
+        "上海": {
+          "v24": 18,
+          "v25": 21.57142857142857,
+          "yoy": 0.1984126984126985
+        },
+        "河北": {
+          "v24": 73.71428571428571,
+          "v25": 70.28571428571429,
+          "yoy": -0.04651162790697658
+        },
+        "吉林": {
+          "v24": 24,
+          "v25": 19.14285714285714,
+          "yoy": -0.2023809523809524
+        },
+        "河南": {
+          "v24": 35.14285714285715,
+          "v25": 34.14285714285715,
+          "yoy": -0.02845528455284553
+        },
+        "四川": {
+          "v24": 17.42857142857143,
+          "v25": 14.42857142857143,
+          "yoy": -0.1721311475409835
+        },
+        "合计": {
+          "v24": 310.1428571428572,
+          "v25": 304.4285714285714,
+          "yoy": -0.01842468908337174
+        }
+      },
+      "ratioRef": "ind9",
+      "ratio": {
+        "山东": {
+          "v24": 0.1046443268665491,
+          "v25": 0.1267543859649123,
+          "yoy": 0.02211005909836319
+        },
+        "广东": {
+          "v24": 0.3839285714285715,
+          "v25": 0.2285714285714286,
+          "yoy": -0.1553571428571429
+        },
+        "青岛": {
+          "v24": 0.2330827067669173,
+          "v25": 0.1822222222222222,
+          "yoy": -0.05086048454469508
+        },
+        "江苏": {
+          "v24": 0.1168258633357825,
+          "v25": 0.1413738019169329,
+          "yoy": 0.02454793858115038
+        },
+        "北京": {
+          "v24": 0.3539823008849557,
+          "v25": 0.3797468354430379,
+          "yoy": 0.0257645345580822
+        },
+        "上海": {
+          "v24": 0.2566191446028513,
+          "v25": 0.3416289592760181,
+          "yoy": 0.08500981467316676
+        },
+        "河北": {
+          "v24": 0.09967162449294958,
+          "v25": 0.1046585832801532,
+          "yoy": 0.00498695878720358
+        },
+        "吉林": {
+          "v24": 0.08463476070528968,
+          "v25": 0.08241082410824108,
+          "yoy": -0.002223936597048601
+        },
+        "河南": {
+          "v24": 0.07573891625615764,
+          "v25": 0.07606619987269256,
+          "yoy": 0.000327283616534918
+        },
+        "四川": {
+          "v24": 0.1244897959183673,
+          "v25": 0.1038026721479959,
+          "yoy": -0.02068712377037145
+        },
+        "合计": {
+          "v24": 0.1113276242243988,
+          "v25": 0.1183560122188281,
+          "yoy": 0.007028387994429355
+        }
+      }
+    },
+    {
+      "idx": 9,
+      "key": "ind9",
+      "name": "月均10000C人力占比",
+      "cat": "各C人力",
+      "type": "ratio",
+      "data": {
+        "山东": {
+          "v24": 0.1046443268665491,
+          "v25": 0.1267543859649123,
+          "yoy": 0.02211005909836319
+        },
+        "广东": {
+          "v24": 0.3839285714285715,
+          "v25": 0.2285714285714286,
+          "yoy": -0.1553571428571429
+        },
+        "青岛": {
+          "v24": 0.2330827067669173,
+          "v25": 0.1822222222222222,
+          "yoy": -0.05086048454469508
+        },
+        "江苏": {
+          "v24": 0.1168258633357825,
+          "v25": 0.1413738019169329,
+          "yoy": 0.02454793858115038
+        },
+        "北京": {
+          "v24": 0.3539823008849557,
+          "v25": 0.3797468354430379,
+          "yoy": 0.0257645345580822
+        },
+        "上海": {
+          "v24": 0.2566191446028513,
+          "v25": 0.3416289592760181,
+          "yoy": 0.08500981467316676
+        },
+        "河北": {
+          "v24": 0.09967162449294958,
+          "v25": 0.1046585832801532,
+          "yoy": 0.00498695878720358
+        },
+        "吉林": {
+          "v24": 0.08463476070528968,
+          "v25": 0.08241082410824108,
+          "yoy": -0.002223936597048601
+        },
+        "河南": {
+          "v24": 0.07573891625615764,
+          "v25": 0.07606619987269256,
+          "yoy": 0.000327283616534918
+        },
+        "四川": {
+          "v24": 0.1244897959183673,
+          "v25": 0.1038026721479959,
+          "yoy": -0.02068712377037145
+        },
+        "合计": {
+          "v24": 0.1113276242243988,
+          "v25": 0.1183560122188281,
+          "yoy": 0.007028387994429355
+        }
+      }
+    },
+    {
+      "idx": 10,
+      "key": "ind10",
+      "name": "月均12000C人力",
+      "cat": "各C人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 59.14285714285715,
+          "v25": 56.14285714285715,
+          "yoy": -0.05072463768115942
+        },
+        "广东": {
+          "v24": 6,
+          "v25": 2.857142857142857,
+          "yoy": -0.5238095238095238
+        },
+        "青岛": {
+          "v24": 26.57142857142857,
+          "v25": 20.71428571428572,
+          "yoy": -0.2204301075268817
+        },
+        "江苏": {
+          "v24": 20.28571428571428,
+          "v25": 20.14285714285714,
+          "yoy": -0.007042253521126736
+        },
+        "北京": {
+          "v24": 4.571428571428571,
+          "v25": 3.714285714285714,
+          "yoy": -0.1874999999999999
+        },
+        "上海": {
+          "v24": 15.85714285714286,
+          "v25": 16.57142857142857,
+          "yoy": 0.04504504504504511
+        },
+        "河北": {
+          "v24": 57,
+          "v25": 48.14285714285715,
+          "yoy": -0.1553884711779448
+        },
+        "吉林": {
+          "v24": 16.14285714285714,
+          "v25": 9.714285714285714,
+          "yoy": -0.3982300884955752
+        },
+        "河南": {
+          "v24": 25.14285714285714,
+          "v25": 16.57142857142857,
+          "yoy": -0.3409090909090908
+        },
+        "四川": {
+          "v24": 10.57142857142857,
+          "v25": 10.85714285714286,
+          "yoy": 0.0270270270270271
+        },
+        "合计": {
+          "v24": 241.2857142857143,
+          "v25": 205.4285714285714,
+          "yoy": -0.1486086441681467
+        }
+      },
+      "ratioRef": "ind11",
+      "ratio": {
+        "山东": {
+          "v24": 0.08112874779541447,
+          "v25": 0.0861842105263158,
+          "yoy": 0.005055462730901322
+        },
+        "广东": {
+          "v24": 0.375,
+          "v25": 0.1904761904761905,
+          "yoy": -0.1845238095238095
+        },
+        "青岛": {
+          "v24": 0.1997851772287863,
+          "v25": 0.1288888888888889,
+          "yoy": -0.07089628833989739
+        },
+        "江苏": {
+          "v24": 0.1043350477590007,
+          "v25": 0.1126198083067093,
+          "yoy": 0.00828476054770852
+        },
+        "北京": {
+          "v24": 0.2831858407079646,
+          "v25": 0.3291139240506329,
+          "yoy": 0.04592808334266829
+        },
+        "上海": {
+          "v24": 0.2260692464358452,
+          "v25": 0.2624434389140272,
+          "yoy": 0.03637419247818194
+        },
+        "河北": {
+          "v24": 0.07707166312536218,
+          "v25": 0.07168687513295044,
+          "yoy": -0.005384787992411738
+        },
+        "吉林": {
+          "v24": 0.05692695214105794,
+          "v25": 0.04182041820418204,
+          "yoy": -0.0151065339368759
+        },
+        "河南": {
+          "v24": 0.0541871921182266,
+          "v25": 0.0369191597708466,
+          "yoy": -0.01726803234738
+        },
+        "四川": {
+          "v24": 0.07551020408163266,
+          "v25": 0.07810894141829394,
+          "yoy": 0.002598737336661286
+        },
+        "合计": {
+          "v24": 0.08661094302856263,
+          "v25": 0.07986670369341851,
+          "yoy": -0.00674423933514412
+        }
+      }
+    },
+    {
+      "idx": 11,
+      "key": "ind11",
+      "name": "月均12000C人力占比",
+      "cat": "各C人力",
+      "type": "ratio",
+      "data": {
+        "山东": {
+          "v24": 0.08112874779541447,
+          "v25": 0.0861842105263158,
+          "yoy": 0.005055462730901322
+        },
+        "广东": {
+          "v24": 0.375,
+          "v25": 0.1904761904761905,
+          "yoy": -0.1845238095238095
+        },
+        "青岛": {
+          "v24": 0.1997851772287863,
+          "v25": 0.1288888888888889,
+          "yoy": -0.07089628833989739
+        },
+        "江苏": {
+          "v24": 0.1043350477590007,
+          "v25": 0.1126198083067093,
+          "yoy": 0.00828476054770852
+        },
+        "北京": {
+          "v24": 0.2831858407079646,
+          "v25": 0.3291139240506329,
+          "yoy": 0.04592808334266829
+        },
+        "上海": {
+          "v24": 0.2260692464358452,
+          "v25": 0.2624434389140272,
+          "yoy": 0.03637419247818194
+        },
+        "河北": {
+          "v24": 0.07707166312536218,
+          "v25": 0.07168687513295044,
+          "yoy": -0.005384787992411738
+        },
+        "吉林": {
+          "v24": 0.05692695214105794,
+          "v25": 0.04182041820418204,
+          "yoy": -0.0151065339368759
+        },
+        "河南": {
+          "v24": 0.0541871921182266,
+          "v25": 0.0369191597708466,
+          "yoy": -0.01726803234738
+        },
+        "四川": {
+          "v24": 0.07551020408163266,
+          "v25": 0.07810894141829394,
+          "yoy": 0.002598737336661286
+        },
+        "合计": {
+          "v24": 0.08661094302856263,
+          "v25": 0.07986670369341851,
+          "yoy": -0.00674423933514412
+        }
+      }
+    },
+    {
+      "idx": 12,
+      "key": "ind12",
+      "name": "100万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 17,
+          "v25": 30,
+          "yoy": 0.7647058823529411
+        },
+        "广东": {
+          "v24": 6,
+          "v25": 4,
+          "yoy": -0.3333333333333333
+        },
+        "青岛": {
+          "v24": 11,
+          "v25": 15,
+          "yoy": 0.3636363636363636
+        },
+        "江苏": {
+          "v24": 10,
+          "v25": 23,
+          "yoy": 1.3
+        },
+        "北京": {
+          "v24": 5,
+          "v25": 3,
+          "yoy": -0.4
+        },
+        "上海": {
+          "v24": 11,
+          "v25": 19,
+          "yoy": 0.7272727272727273
+        },
+        "河北": {
+          "v24": 19,
+          "v25": 25,
+          "yoy": 0.3157894736842105
+        },
+        "吉林": {
+          "v24": 4,
+          "v25": 6,
+          "yoy": 0.5
+        },
+        "河南": {
+          "v24": 3,
+          "v25": 8,
+          "yoy": 1.666666666666667
+        },
+        "四川": {
+          "v24": 2,
+          "v25": 6,
+          "yoy": 2
+        },
+        "合计": {
+          "v24": 88,
+          "v25": 139,
+          "yoy": 0.5795454545454546
+        }
+      }
+    },
+    {
+      "idx": 13,
+      "key": "ind13",
+      "name": "200万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 1,
+          "v25": 6,
+          "yoy": 5
+        },
+        "广东": {
+          "v24": 2,
+          "v25": 2,
+          "yoy": 0
+        },
+        "青岛": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        },
+        "江苏": {
+          "v24": 2,
+          "v25": 0,
+          "yoy": -1
+        },
+        "北京": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        },
+        "上海": {
+          "v24": 2,
+          "v25": 3,
+          "yoy": 0.5
+        },
+        "河北": {
+          "v24": 5,
+          "v25": 2,
+          "yoy": -0.6
+        },
+        "吉林": {
+          "v24": 2,
+          "v25": 3,
+          "yoy": 0.5
+        },
+        "河南": {
+          "v24": 0,
+          "v25": 2,
+          "yoy": 0
+        },
+        "四川": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        },
+        "合计": {
+          "v24": 17,
+          "v25": 21,
+          "yoy": 0.2352941176470588
+        }
+      }
+    },
+    {
+      "idx": 14,
+      "key": "ind14",
+      "name": "300万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 0,
+          "v25": 2,
+          "yoy": 0
+        },
+        "广东": {
+          "v24": 2,
+          "v25": 0,
+          "yoy": -1
+        },
+        "青岛": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "江苏": {
+          "v24": 1,
+          "v25": 0,
+          "yoy": -1
+        },
+        "北京": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "上海": {
+          "v24": 2,
+          "v25": 2,
+          "yoy": 0
+        },
+        "河北": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        },
+        "吉林": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "河南": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "四川": {
+          "v24": 1,
+          "v25": 0,
+          "yoy": -1
+        },
+        "合计": {
+          "v24": 7,
+          "v25": 5,
+          "yoy": -0.2857142857142857
+        }
+      }
+    },
+    {
+      "idx": 15,
+      "key": "ind15",
+      "name": "500万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "广东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "青岛": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "江苏": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "北京": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "上海": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        },
+        "河北": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "吉林": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "河南": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "四川": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "合计": {
+          "v24": 1,
+          "v25": 1,
+          "yoy": 0
+        }
+      }
+    },
+    {
+      "idx": 16,
+      "key": "ind16",
+      "name": "800万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "广东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "青岛": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "江苏": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "北京": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "上海": {
+          "v24": 0,
+          "v25": 1,
+          "yoy": 0
+        },
+        "河北": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "吉林": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "河南": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "四川": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "合计": {
+          "v24": 0,
+          "v25": 1,
+          "yoy": 0
+        }
+      }
+    },
+    {
+      "idx": 17,
+      "key": "ind17",
+      "name": "1000万及以上人力",
+      "cat": "各期交人力",
+      "type": "count",
+      "data": {
+        "山东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "广东": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "青岛": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "江苏": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "北京": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "上海": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "河北": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "吉林": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "河南": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "四川": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        },
+        "合计": {
+          "v24": 0,
+          "v25": 0,
+          "yoy": 0
+        }
+      }
+    }
+  ]
+};
+
+/* ===== 基础取数 ===== */
+const branches = DATA.branches.filter(b=>b.code!==null);
+const totalRow = DATA.branches.find(b=>b.code===null);
+const allRows = [...branches, totalRow];
+const inds = DATA.indicators;
+const getInd = k => inds.find(i=>i.key===k);
+
+const fmtV = v => { if(v===null||v===undefined) return "—"; const n=Number(v); return Math.abs(n-Math.round(n))<1e-9 ? String(Math.round(n)) : n.toFixed(1); };
+const fmtPct = (x,type) => { if(x===null||x===undefined) return "—"; const n=Number(x)*100; const s=(n>=0?"+":"")+n.toFixed(1); return type==="ratio" ? s+"pp" : s+"%"; };
+const yoyCls = x => x>1e-9 ? "up" : (x<-1e-9 ? "down" : "flat");
+const arrow = x => x>1e-9 ? "▲" : (x<-1e-9 ? "▼" : "—");
+const arrowHtml = x => `<span class="ar-${yoyCls(x)}">${arrow(x)}</span>`;
+const tagText = ind => ind.type==="ratio" ? "占比" : (ind.cat==="各期交人力" ? "累计" : "月均");
+
+/* ===== 主题 ===== */
+const THEMES = [
+  {id:"theme-dark",   name:"暗夜黑",  dot:"#38bdf8", primary:"#38bdf8", secondary:"#a78bfa", grid:"rgba(120,140,180,.18)", tick:"#93a4c0"},
+  {id:"theme-antgold",name:"暗金版",  dot:"#faad14", primary:"#faad14", secondary:"#ffc53d", grid:"rgba(180,160,120,.12)", tick:"#a6a6a6"},
+  {id:"theme-tech",   name:"科技蓝",  dot:"#2563eb", primary:"#2563eb", secondary:"#06b6d4", grid:"rgba(100,116,139,.18)", tick:"#64748b"},
+  {id:"theme-redgold",name:"商务红金",dot:"#c0392b", primary:"#c0392b", secondary:"#d4af37", grid:"rgba(120,90,60,.18)",  tick:"#8a6f57"},
+  {id:"theme-green",  name:"清新绿",  dot:"#059669", primary:"#059669", secondary:"#10b981", grid:"rgba(80,120,100,.18)", tick:"#5f7d6c"},
+  {id:"theme-gray",   name:"简约灰",  dot:"#475569", primary:"#475569", secondary:"#94a3b8", grid:"rgba(110,120,135,.18)",tick:"#7c828c"},
+];
+let curTheme = THEMES[0];
+const POS="#e23c3c", NEG="#1f9d55", FLAT="#9ca3af", YOYLINE="#eab308";
+
+/* ===== 一、系统指标（两大维度） ===== */
+/* 维度命名依据指标特性：
+   - 月均主管人力（总体）+ 各C人力 5 档（按职级拆分，占比已并入各人力框）→ 定名「人力结构」；
+   - 各期交人力（累计期交门槛）→ 定名「期交人力」。
+   注：各C人力的独立「占比」框已删去，占比值直接并入对应人力框内显示。 */
+const CATS = [
+  {key:"人力结构", items:["ind1","ind2","ind4","ind6","ind8","ind10"]},
+  {key:"期交人力",     items:["ind12","ind13","ind14","ind15","ind16","ind17"]},
+];
+function indBoxHtml(ind){
+  const t=ind.data["合计"];
+  // ===== C人力方阵卡片：标题居中放大 + 3行×2列（绝对值/占比 × 24/25/同比），无表格线、字号统一 =====
+  if(ind.type==="count" && ind.cat==="各C人力" && ind.ratio){
+    const r=ind.ratio["合计"];
+    return `<div class="ind-box c-matrix">
+      <div class="ib-head"><span class="ib-name">${ind.name}</span><span class="ib-tag ${ind.type}">${tagText(ind)}</span></div>
+      <div class="c-grid">
+        <div class="cg-corner">维度</div><div class="cg-h">绝对值</div><div class="cg-h">占比</div>
+        <div class="cg-r">24年</div><div class="cg-v">${fmtV(t.v24)}</div><div class="cg-v">${(r.v24*100).toFixed(1)}%</div>
+        <div class="cg-r">25年</div><div class="cg-v accent">${fmtV(t.v25)}</div><div class="cg-v accent">${(r.v25*100).toFixed(1)}%</div>
+        <div class="cg-r">同比</div><div class="cg-v ${yoyCls(t.yoy)}">${arrowHtml(t.yoy)} ${fmtPct(t.yoy,ind.type)}</div><div class="cg-v ${yoyCls(r.yoy)}">${arrowHtml(r.yoy)} ${fmtPct(r.yoy,"ratio")}</div>
+      </div>
+    </div>`;
+  }
+  // ===== 期交门槛人力方阵卡片：标题居中放大 + 2行×2列（绝对值/同比 × 24/25），无表格线、字号统一 =====
+  if(ind.cat==="各期交人力"){
+    return `<div class="ind-box c-matrix">
+      <div class="ib-head"><span class="ib-name">${ind.name}</span><span class="ib-tag ${ind.type}">${tagText(ind)}</span></div>
+      <div class="c-grid">
+        <div class="cg-corner">维度</div><div class="cg-h">24年</div><div class="cg-h">25年</div>
+        <div class="cg-r">绝对值</div><div class="cg-v">${fmtV(t.v24)}</div><div class="cg-v accent">${fmtV(t.v25)}</div>
+        <div class="cg-r">同比</div><div class="cg-v">—</div><div class="cg-v ${yoyCls(t.yoy)}">${arrowHtml(t.yoy)} ${fmtPct(t.yoy,ind.type)}</div>
+      </div>
+    </div>`;
+  }
+  // ===== 月均主管人力方阵卡片：标题居中20px深蓝、其余16px、2列（维度|绝对值）× 3行（24/25/同比） =====
+  if(ind.cat==="月均人力"){
+    return `<div class="ind-box c-matrix yj">
+      <div class="ib-head"><span class="ib-name">${ind.name}</span><span class="ib-tag ${ind.type}">${tagText(ind)}</span></div>
+      <div class="c-grid cg-2col">
+        <div class="cg-corner">维度</div><div class="cg-h">绝对值</div>
+        <div class="cg-r">24年</div><div class="cg-v">${fmtV(t.v24)}</div>
+        <div class="cg-r">25年</div><div class="cg-v accent">${fmtV(t.v25)}</div>
+        <div class="cg-r">同比</div><div class="cg-v ${yoyCls(t.yoy)}">${arrowHtml(t.yoy)} ${fmtPct(t.yoy,ind.type)}</div>
+      </div>
+    </div>`;
+  }
+  // ===== 其他（默认双栏，理论不触发） =====
+  let v24txt,v25txt;
+  if(ind.type==="ratio"){ v24txt=(t.v24*100).toFixed(1)+"%"; v25txt=(t.v25*100).toFixed(1)+"%"; }
+  else { v24txt=fmtV(t.v24); v25txt=fmtV(t.v25); }
+  const cls=yoyCls(t.yoy), ytxt=fmtPct(t.yoy, ind.type);
+  return `<div class="ind-box">
+    <div class="ib-head"><span class="ib-name">${ind.name}</span><span class="ib-tag ${ind.type}">${tagText(ind)}</span></div>
+    <div class="ib-vals">
+      <div class="ib-val"><span class="ib-vlabel">24年 • 绝对值</span><span class="ib-vnum">${v24txt}</span></div>
+      <div class="ib-val"><span class="ib-vlabel">25年 • 绝对值</span><span class="ib-vnum accent">${v25txt}</span></div>
+    </div>
+    <div class="ib-yoy ${cls}">${arrowHtml(t.yoy)} 同比 ${ytxt}</div>
+  </div>`;
+}
+(function buildSystem(){
+  const wrap=document.getElementById("sysWrap");
+  CATS.forEach(cat=>{
+    const html=`<div class="sys-cat"><div class="sys-cat-head"><span class="sys-cat-title">${cat.key}</span><span class="sys-cat-count">${cat.items.length} 项指标</span></div><div class="sys-grid">`+
+      cat.items.map(k=>indBoxHtml(getInd(k))).join("")+
+      `</div></div>`;
+    wrap.insertAdjacentHTML("beforeend", html);
+  });
+})();
+
+/* ===== 二、分公司对比 ===== */
+const CAT_OPTS = {
+  "月均人力":   ["ind1"],
+  "各C人力":    ["ind2","ind4","ind6","ind8","ind10"],
+  "各期交人力": ["ind12","ind13","ind14","ind15","ind16","ind17"],
+};
+const catState = {
+  "月均人力":   {sel:"ind1",  mode:"count"},
+  "各C人力":    {sel:"ind2",  mode:"count"},
+  "各期交人力": {sel:"ind12", mode:"count"},
+};
+let curCat="月均人力";
+let compareChart=null;
+
+const valLabel = {
+  id:"valLabel",
+  afterDatasetsDraw(chart){
+    const {ctx}=chart;
+    ctx.save();
+    ctx.font="600 11px sans-serif";
+    ctx.textAlign="center"; ctx.textBaseline="bottom";
+    chart.data.datasets.forEach((ds,di)=>{
+      if(ds._hideLabel) return;
+      const meta=chart.getDatasetMeta(di);
+      if(meta.hidden) return;
+      meta.data.forEach((el,i)=>{
+        const v=ds.data[i];
+        if(v===null||v===undefined) return;
+        ctx.fillStyle = ds.type==="line" ? "#92400e" : curTheme.tick;
+        let txt = ds.type==="line" ? ((v>=0?"+":"")+v+"%") : chart.$valFmt(v);
+        ctx.fillText(txt, el.x, el.y-4);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function buildCompare(){
+  const st=catState[curCat];
+  let ind=getInd(st.sel);
+  if(curCat==="各C人力" && st.mode==="ratio"){ ind=getInd(ind.ratioRef); }
+  const isRatio = ind.type==="ratio";
+  const labels=branches.map(b=>b.name);
+  const v24=branches.map(b=>+ind.data[b.name].v24);
+  const v25=branches.map(b=>+ind.data[b.name].v25);
+  const yoy=branches.map(b=>+(ind.data[b.name].yoy*100).toFixed(1));
+  const valFmt = isRatio ? (v=>(v*100).toFixed(1)+"%") : fmtV;
+  const unit = isRatio ? "占比" : (curCat==="各期交人力" ? "人（累计）" : "人/月（月均）");
+  const modeLabel = (curCat==="各C人力") ? (st.mode==="ratio"?"占比":"人数") : "";
+
+  document.getElementById("cmpTitle").textContent = `${ind.name}${modeLabel?"（"+modeLabel+"）":""}`;
+  document.getElementById("cmpHint").textContent = `单位：${unit} • 柱=24年/25年数值，折线=同比（%）`;
+
+  const cfg={
+    type:"bar",
+    data:{labels,
+      datasets:[
+        {label:"2024年",data:v24,backgroundColor:curTheme.primary,borderRadius:5},
+        {label:"2025年",data:v25,backgroundColor:curTheme.secondary,borderRadius:5},
+        {label:"同比",data:yoy,type:"line",yAxisID:"y1",borderColor:YOYLINE,backgroundColor:YOYLINE,
+         borderWidth:2,tension:.3,pointRadius:4,pointHoverRadius:6,
+         pointBackgroundColor:yoy.map(s=>s>1e-9?POS:(s<-1e-9?NEG:FLAT)),
+         _hideLabel:false},
+      ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{
+        legend:{labels:{color:curTheme.tick,usePointStyle:true,boxWidth:8}},
+        tooltip:{callbacks:{
+          label:c=>{
+            if(c.dataset.type==="line") return "同比："+(c.parsed.y>=0?"+":"")+c.parsed.y+"%";
+            const raw=c.dataset.data[c.dataIndex];
+            return c.dataset.label+": "+(isRatio?(raw*100).toFixed(1)+"%":fmtV(raw));
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{color:curTheme.tick},grid:{display:false}},
+        y:{beginAtZero:true,ticks:{color:curTheme.tick},grid:{color:curTheme.grid},title:{display:true,text:unit,color:curTheme.tick}},
+        y1:{position:"right",beginAtZero:true,grid:{drawOnChartArea:false},ticks:{color:curTheme.tick,callback:v=>v+"%"},title:{display:true,text:"同比%",color:curTheme.tick}},
+      }
+    },
+    plugins:[valLabel]
+  };
+  if(compareChart) compareChart.destroy();
+  compareChart=new Chart(document.getElementById("cmpChart"),cfg);
+  compareChart.$valFmt=valFmt;
+  // 图例色块同步主题
+  document.getElementById("lg24").style.background=curTheme.primary;
+  document.getElementById("lg25").style.background=curTheme.secondary;
+}
+
+function renderControls(){
+  const sel=document.getElementById("selInd");
+  const toggle=document.getElementById("modeToggle");
+  if(curCat==="月均人力"){ sel.style.display="none"; toggle.style.display="none"; }
+  else {
+    sel.style.display="";
+    sel.innerHTML=CAT_OPTS[curCat].map(k=>`<option value="${k}">${getInd(k).name}</option>`).join("");
+    sel.value=catState[curCat].sel;
+    if(curCat==="各C人力"){ toggle.style.display=""; document.querySelectorAll(".mode-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===catState[curCat].mode)); }
+    else toggle.style.display="none";
+  }
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    curCat=btn.dataset.cat;
+    renderControls();
+    buildCompare();
+  };
+});
+document.getElementById("selInd").onchange=e=>{ catState[curCat].sel=e.target.value; buildCompare(); };
+document.querySelectorAll(".mode-btn").forEach(b=>{
+  b.onclick=()=>{ catState[curCat].mode=b.dataset.mode; document.querySelectorAll(".mode-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); buildCompare(); };
+});
+
+/* ===== 三、完整明细（方案③ 卡片分组 • 转置：行=维度，列=分公司） =====
+   各C人力：同一 C 级的「人数(count) + 占比(ratio)」合并为一张表（6 行：24年/25年/同比/24年占比/25年占比/同比占比）。 */
+(function buildDetail(){
+  const order=[]; const map={};
+  inds.forEach(ind=>{ if(!map[ind.cat]){ map[ind.cat]=[]; order.push(ind.cat); } map[ind.cat].push(ind); });
+  let html="";
+  order.forEach(cat=>{
+    let cardsHtml="";
+    let cntLabel=map[cat].length;
+    if(cat==="各C人力"){
+      const counts=map[cat].filter(i=>i.type==="count");
+      cntLabel=counts.length;
+      counts.forEach(ind=>{
+        const ratioInd=getInd(ind.ratioRef);
+        const colHeads = allRows.map(r=>`<th class="${r===totalRow?'total-col':''}">${r.name}</th>`).join("");
+        const rowDefs = [
+          {label:"24年",      d:ind.data,     key:"v24"},
+          {label:"25年",      d:ind.data,     key:"v25"},
+          {label:"同比",      d:ind.data,     key:"yoy", isYoy:true},
+          {label:"24年占比",  d:ratioInd.data, key:"v24", isRatio:true, sep:true},
+          {label:"25年占比",  d:ratioInd.data, key:"v25", isRatio:true},
+          {label:"同比占比",  d:ratioInd.data, key:"yoy", isRatio:true, isYoy:true}
+        ];
+        const bodyRows = rowDefs.map(rd=>{
+          const cells = allRows.map(r=>{
+            const d = rd.d[r.name];
+            let val="—", cls="";
+            if(rd.isYoy){
+              const yv = d&&d.yoy!=null ? d.yoy : null;
+              if(yv!=null){ val = arrowHtml(yv)+" "+fmtPct(yv, rd.isRatio?"ratio":ind.type); cls = yoyCls(yv); }
+            } else {
+              const v = d&&d[rd.key]!=null ? d[rd.key] : null;
+              if(v!=null){ val = rd.isRatio ? (v*100).toFixed(1)+"%" : fmtV(v); if(rd.key==="v25" && !rd.isRatio) cls="accent"; }
+            }
+            const tcls = (r===totalRow)?" total-col":"";
+            return `<td class="${cls}${tcls}">${val}</td>`;
+          }).join("");
+          const sepCls = rd.sep ? " grp-sep":"";
+          return `<tr class="${sepCls}"><td class="bn">${rd.label}</td>${cells}</tr>`;
+        }).join("");
+        cardsHtml+=`<div class="ind-card merged-card"><div class="ic-head"><span class="ic-name">${ind.name}</span><span class="gh-tag">人数+占比</span></div><div class="ic-scroll"><table class="ic-tbl"><thead><tr><th>维度</th>${colHeads}</tr></thead><tbody>${bodyRows}</tbody></table></div></div>`;
+      });
+    } else {
+      map[cat].forEach(ind=>{
+        const tag=tagText(ind);
+        const colHeads = allRows.map(r=>`<th class="${r===totalRow?'total-col':''}">${r.name}</th>`).join("");
+        const rowDefs = [
+          {label:"24年", key:"v24"},
+          {label:"25年", key:"v25"},
+          {label:"同比", key:"yoy", isYoy:true}
+        ];
+        const bodyRows = rowDefs.map(rd=>{
+          const cells = allRows.map(r=>{
+            const d = ind.data[r.name];
+            let val="—", cls="";
+            if(rd.isYoy){
+              const yv = d&&d.yoy!=null ? d.yoy : null;
+              if(yv!=null){ val = arrowHtml(yv)+" "+fmtPct(yv,ind.type); cls = yoyCls(yv); }
+              else { val="—"; cls="flat"; }
+            } else {
+              const v = d&&d[rd.key]!=null ? d[rd.key] : null;
+              if(v!=null){ val = ind.type==="ratio" ? (v*100).toFixed(1)+"%" : fmtV(v); if(rd.key==="v25") cls="accent"; }
+              else { val="—"; }
+            }
+            const tcls = (r===totalRow)?" total-col":"";
+            return `<td class="${cls}${tcls}">${val}</td>`;
+          }).join("");
+          return `<tr><td class="bn">${rd.label}</td>${cells}</tr>`;
+        }).join("");
+        cardsHtml+=`<div class="ind-card"><div class="ic-head"><span class="ic-name">${ind.name}</span><span class="gh-tag">${tag}</span></div><div class="ic-scroll"><table class="ic-tbl"><thead><tr><th>维度</th>${colHeads}</tr></thead><tbody>${bodyRows}</tbody></table></div></div>`;
+      });
+    }
+    html+=`<div class="cat-sec"><div class="cat-sec-head">${cat}<span class="cat-cnt">${cntLabel} 项</span></div><div class="card-grid">${cardsHtml}</div></div>`;
+  });
+  document.getElementById("detail").innerHTML = html;
+})();
+
+/* ===== 主题切换 ===== */
+function applyTheme(id){
+  document.body.className=id;
+  curTheme=THEMES.find(t=>t.id===id);
+  document.querySelectorAll(".theme-btn").forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+  if(compareChart){
+    compareChart.data.datasets[0].backgroundColor=curTheme.primary;
+    compareChart.data.datasets[1].backgroundColor=curTheme.secondary;
+    compareChart.options.plugins.legend.labels.color=curTheme.tick;
+    compareChart.options.scales.x.ticks.color=curTheme.tick;
+    compareChart.options.scales.y.ticks.color=curTheme.tick;
+    compareChart.options.scales.y.grid.color=curTheme.grid;
+    compareChart.options.scales.y.title.color=curTheme.tick;
+    compareChart.options.scales.y1.ticks.color=curTheme.tick;
+    compareChart.options.scales.y1.title.color=curTheme.tick;
+    document.getElementById("lg24").style.background=curTheme.primary;
+    document.getElementById("lg25").style.background=curTheme.secondary;
+    compareChart.update("none");
+  }
+}
+(function(){
+  const box=document.getElementById("themeSwitch");
+  THEMES.forEach((th,i)=>{
+    const b=document.createElement("div");
+    b.className="theme-btn"+(i===0?" active":"");
+    b.dataset.id=th.id;
+    b.innerHTML=`<span class="dot" style="background:${th.dot}"></span>${th.name}`;
+    b.onclick=()=>applyTheme(th.id);
+    box.appendChild(b);
+  });
+  applyTheme(THEMES[0].id);
+})();
+
+renderControls();
+buildCompare();
+
+/* ===== 导出高保真PDF：直接调用浏览器打印（所见即所得） ===== */
+</script>
+</body>
+</html>
