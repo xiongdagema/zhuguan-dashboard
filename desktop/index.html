@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主管指标决策仪表盘（暗金 Executive）</title>
+<meta property="og:title" content="主管指标决策仪表盘">
+<meta property="og:description" content="17 项主管指标 · 2024 vs 2025 同比 · 分公司下钻 · 人力结构/期交人力双诊断">
+<meta name="theme-color" content="#0B0E14">
+<style>
+:root{
+  --bg:#0B0E14; --surface:#12161F; --surface2:#171C27;
+  --line:rgba(201,168,106,.13); --line2:rgba(230,237,243,.07);
+  --gold:#C9A86A; --gold2:#E3C88F; --goldDim:rgba(201,168,106,.18);
+  --ink:#E6EDF3; --dim:rgba(230,237,243,.58); --faint:rgba(230,237,243,.34);
+  --pos:#34D399; --neg:#F87171;
+}
+body.light{
+  --bg:#F6F7F9; --surface:#FFFFFF; --surface2:#FBFCFD;
+  --line:rgba(0,0,0,.09); --line2:rgba(0,0,0,.05);
+  --gold:#B0811F; --gold2:#8C6A15; --goldDim:rgba(176,129,31,.13);
+  --ink:#16202E; --dim:rgba(22,32,46,.62); --faint:rgba(22,32,46,.38);
+  --pos:#0E9F6E; --neg:#DC2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);min-height:100vh;
+  font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  transition:background .35s,color .35s}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 420px at 18% -8%,rgba(201,168,106,.13),transparent 62%),
+             radial-gradient(700px 380px at 92% 4%,rgba(201,168,106,.07),transparent 60%)}
+.wrap{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:26px 26px 40px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:21px;font-weight:700;letter-spacing:.3px}
+h1 em{font-style:normal;color:var(--gold2)}
+.sub{font-size:12px;color:var(--faint);margin-top:5px}
+.tgl{background:var(--surface);border:1px solid var(--line);color:var(--dim);
+  padding:7px 14px;border-radius:20px;font-size:12px;cursor:pointer;transition:.2s;font-family:inherit}
+.tgl:hover{border-color:var(--gold);color:var(--gold2)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;
+  transition:border-color .25s,box-shadow .25s}
+.card:hover{border-color:rgba(201,168,106,.30);box-shadow:0 6px 26px rgba(0,0,0,.30)}
+.card h2{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.card h2 b{font-weight:500;letter-spacing:0;text-transform:none;font-size:11px;color:var(--dim)}
+.card h2 .ht{background:var(--goldDim);color:var(--gold2);font-size:16px;font-weight:700;
+  padding:5px 16px;border-radius:8px;letter-spacing:.08em;line-height:1.4;text-transform:none;
+  display:inline-block;flex-shrink:0}
+.s4{grid-column:span 4}.s5{grid-column:span 5}.s3{grid-column:span 3}
+.s7{grid-column:span 7}.s12{grid-column:span 12}
+.cat-wrap{display:flex;gap:26px;align-items:flex-start}
+.cat-cards{flex:1;min-width:0}
+.cat-diag{width:330px;flex-shrink:0;border-left:1px solid var(--line2);padding-left:24px}
+.cat-diag .ins-item:first-child .ins-tag{margin-top:0}
+.kpis17{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpis17 .kpi{padding:13px 14px}
+.kpis17 .kpi .k-v{font-size:20px}
+.kpis6{grid-template-columns:repeat(3,1fr)}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 15px;
+  transition:border-color .25s,box-shadow .25s}
+.kpi:hover{border-color:rgba(201,168,106,.30);box-shadow:0 6px 26px rgba(0,0,0,.30)}
+.kpi .k-l{font-size:11px;color:var(--dim)}
+.kpi .k-v{font-size:22px;font-weight:700;color:var(--ink);margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .k-d{font-size:11px;font-weight:600}
+.kpi .k-d span{color:var(--faint);font-weight:400}
+.ins{display:flex;flex-direction:column;gap:11px}
+.ins-item{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.6;color:var(--dim)}
+.ins-tag{flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-top:1px}
+.t-neg{background:rgba(248,113,113,.15);color:#F87171}
+.t-pos{background:rgba(52,211,153,.15);color:#34D399}
+.t-warn{background:rgba(251,191,36,.15);color:#FBBF24}
+.ins-item b{color:var(--ink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.chip{background:var(--surface);border:1px solid var(--line);color:var(--dim);
+  padding:6px 13px;border-radius:18px;font-size:12px;cursor:pointer;transition:.18s;font-family:inherit}
+.chip:hover{border-color:rgba(201,168,106,.45);color:var(--ink)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#0B0E14;font-weight:600}
+.chart{width:100%;height:auto;display:block;font-family:inherit}
+.chart .s-lbl{fill:var(--dim);font-size:12px}
+.chart .s-val{fill:var(--ink);font-size:11.5px;font-weight:600}
+.chart .s-yoy{font-size:11.5px;font-weight:600}
+.chart .s-tick{fill:var(--faint);font-size:10.5px;font-variant-numeric:tabular-nums}
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px}
+table.dt th{text-align:right;padding:9px 10px;color:var(--faint);font-weight:500;font-size:11px;
+  border-bottom:1px solid var(--line2)}
+table.dt th:first-child{text-align:left}
+table.dt td{text-align:right;padding:10px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+table.dt td:first-child{text-align:left}
+table.dt td.bn{color:var(--ink);font-weight:600}
+table.dt tbody tr{cursor:pointer;transition:background .18s}
+table.dt tbody tr:hover{background:var(--surface2)}
+table.dt tbody tr.sel{background:var(--goldDim)}
+table.dt tr.tot td{border-top:1px solid var(--line);font-weight:700;color:var(--ink);border-bottom:none}
+table.dt tr.tot td.bn{color:var(--gold2)}
+table.dt.rdt th,table.dt.rdt td{text-align:left}
+table.dt.rdt td.rc{position:relative;padding:7px 10px;min-width:88px;overflow:hidden}
+.rc .rb{position:absolute;display:block;left:2px;top:4px;bottom:4px;background:var(--goldDim);
+  border-radius:3px;z-index:0;transition:width .3s}
+.rc .rv{position:relative;z-index:1;display:block;font-weight:700;font-size:13px;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1.25}
+.rc .rv.zer{color:var(--faint);font-weight:500}
+.rc .rl{position:relative;z-index:1;display:flex;gap:7px;align-items:baseline;font-size:10.5px;
+  line-height:1.3;margin-top:1px;white-space:nowrap}
+.rc .old{color:var(--faint);font-variant-numeric:tabular-nums}
+.rc .ry{font-weight:600}
+table.ht{width:100%;border-collapse:collapse;font-size:12px}
+table.ht th{padding:8px 7px;color:var(--faint);font-weight:500;font-size:11px;
+  border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+table.ht th:first-child{text-align:left}
+table.ht td{padding:8px 7px;text-align:right;font-variant-numeric:tabular-nums;
+  border-bottom:1px solid var(--line2);border-radius:4px}
+table.ht td.bn{font-weight:600;color:var(--ink);white-space:nowrap}
+table.ht td:first-child{text-align:left}
+table.ht tbody tr:last-child td{border-top:1px solid var(--line);font-weight:700}
+table.ht tbody tr:last-child td.bn{color:var(--gold2)}
+.mut{color:var(--faint)}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+text.pos{fill:var(--pos)}text.neg{fill:var(--neg)}
+.kpi.a-pos{border-left:3px solid var(--pos)}
+.kpi.a-neg{border-left:3px solid var(--neg)}
+.kpi.a-gold{border-left:3px solid var(--gold)}
+footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line2);
+  font-size:11px;color:var(--faint);line-height:1.75}
+footer b{color:var(--dim);font-weight:600}
+.ind-wrap{display:flex;gap:20px;align-items:stretch}
+.ind-nav{width:170px;flex-shrink:0;max-height:560px;overflow-y:auto;padding-right:6px}
+.ind-nav::-webkit-scrollbar{width:4px}
+.ind-nav::-webkit-scrollbar-thumb{background:rgba(201,168,106,.35);border-radius:2px}
+.ind-nav::-webkit-scrollbar-track{background:transparent}
+.ind-group{font-size:10.5px;color:var(--faint);margin:10px 0 4px;letter-spacing:.12em}
+.ind-item{display:block;width:100%;text-align:left;background:none;border:none;
+  color:var(--dim);font-size:12.5px;padding:5px 9px;border-radius:6px;cursor:pointer;
+  font-family:inherit;transition:.15s}
+.ind-item:hover{background:var(--surface2);color:var(--ink)}
+.ind-item.on{background:var(--goldDim);color:var(--gold2);font-weight:600}
+.ind-main{flex:1;min-width:0}
+.ind-cols{display:flex;gap:24px;align-items:flex-start;margin-top:2px}
+.ind-left{flex:11;min-width:0}
+.ind-right{flex:9;min-width:0}
+.ind-name{font-size:15px;font-weight:700;color:var(--gold2)}
+.ind-sum{display:flex;gap:26px;flex-wrap:wrap;margin:10px 0 6px;font-size:12px;color:var(--dim)}
+.ind-sum .is-lbl{display:block;margin-bottom:2px}
+.ind-sum b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+table.it{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px}
+table.it th{text-align:right;padding:7px 9px;color:var(--dim);font-weight:600;font-size:11px;
+  border-bottom:1px solid var(--goldDim);white-space:nowrap;letter-spacing:.04em}
+table.it th:first-child{text-align:left}
+table.it th:first-child,table.it td:first-child{width:28%}
+table.it td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--line2);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+table.it td:first-child{text-align:left}
+table.it td.bn{font-weight:600;color:var(--ink)}
+table.it tr.it-tot td{border-top:1px solid var(--line);font-weight:700;color:var(--ink);
+  border-bottom:none;background:var(--goldDim)}
+table.it tr.it-tot td.bn{color:var(--gold2)}
+/* 表头行凸显：金底 + 金字，与区块标题色块呼应 */
+table.dt th,table.ht th,table.it th{
+  background:var(--goldDim);color:var(--gold2);font-weight:700;letter-spacing:.05em;
+  border-bottom:1px solid var(--gold)}
+table.dt th:first-child,table.ht th:first-child,table.it th:first-child{border-radius:8px 0 0 8px}
+table.dt th:last-child,table.ht th:last-child,table.it th:last-child{border-radius:0 8px 8px 0}
+@media(max-width:1080px){.s4,.s5,.s3,.s7{grid-column:span 12}.kpis17{grid-template-columns:repeat(3,1fr)}.kpis6{grid-template-columns:repeat(2,1fr)}.cat-wrap{flex-direction:column}.cat-diag{width:100%;border-left:none;padding-left:0;border-top:1px solid var(--line2);padding-top:16px}.ind-wrap{flex-direction:column}.ind-nav{width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:4px}.ind-group{width:100%;margin:6px 0 2px}.ind-cols{flex-direction:column}}
+</style></head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>主管个人指标 <em>决策仪表盘</em></h1>
+      <div class="sub">2025 年月均口径 ｜ 同比对比 2024 年 ｜ 点击分公司或表格行可下钻</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="tgl" id="tgl">明暗切换</button>
+    </div>
+  </header>
+
+  <div class="chips">
+    <button class="chip on" data-b="合计">系统</button><button class="chip" data-b="山东">山东</button><button class="chip" data-b="广东">广东</button><button class="chip" data-b="青岛">青岛</button><button class="chip" data-b="江苏">江苏</button><button class="chip" data-b="北京">北京</button><button class="chip" data-b="上海">上海</button><button class="chip" data-b="河北">河北</button><button class="chip" data-b="吉林">吉林</button><button class="chip" data-b="河南">河南</button><button class="chip" data-b="四川">四川</button>
+  </div>
+
+  <div class="grid">
+    <section class="card s12">
+      <h2><span class="ht">人力结构</span> <b><span id="focName">系统</span>｜11 项指标（数值＝2025 月均）｜右侧为分类诊断</b></h2>
+      <div class="cat-wrap">
+        <div class="cat-cards"><div class="kpis17" id="cardsHr"></div></div>
+        <div class="cat-diag ins" id="diagHr"></div>
+      </div>
+    </section>
+
+    <section class="card s12">
+      <h2><span class="ht">期交人力（高产）</span> <b><span id="focName2">系统</span>｜6 项指标（数值＝2025 月均）｜右侧为分类诊断</b></h2>
+      <div class="cat-wrap">
+        <div class="cat-cards"><div class="kpis17 kpis6" id="cardsFx"></div></div>
+        <div class="cat-diag ins" id="diagFx"></div>
+      </div>
+    </section>
+
+    <section class="card s12">
+      <h2><span class="ht">全指标浏览器</span> <b>左侧选指标｜图左：10 家对比条｜表右：该指标全部数据（2024 / 2025 / 同比）</b></h2>
+      <div class="ind-wrap">
+        <div class="ind-nav" id="indNav"></div>
+        <div class="ind-main">
+          <span class="ind-name" id="indName">月均主管人力</span>
+          <div id="indSum"></div>
+          <div class="ind-cols">
+            <div class="ind-left" id="indChart"></div>
+            <div class="ind-right" id="indTable"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card s12">
+      <h2><span class="ht">同比热力表</span> <b>全部指标一览，绿＝增长 红＝收缩｜悬停看 2024→2025 原值</b></h2>
+      <table class="ht"><thead><tr><th>分公司</th><th>月均主管人力</th><th>1500C</th><th>3000C</th><th>6000C</th><th>10000C</th><th>12000C</th><th>100万+</th><th>200万+</th></tr></thead><tbody><tr><td class="bn">河北</td><td class="neg" style="background:rgba(248,113,113,0.12)" title="2024: 740 → 2025: 672">-9.2%</td><td class="neg" style="background:rgba(248,113,113,0.14)" title="2024: 412 → 2025: 365">-11.4%</td><td class="neg" style="background:rgba(248,113,113,0.11)" title="2024: 268 → 2025: 245">-8.4%</td><td class="neg" style="background:rgba(248,113,113,0.05)" title="2024: 140 → 2025: 139">-0.6%</td><td class="neg" style="background:rgba(248,113,113,0.08)" title="2024: 74 → 2025: 70">-4.7%</td><td class="neg" style="background:rgba(248,113,113,0.17)" title="2024: 57 → 2025: 48">-15.5%</td><td class="pos" style="background:rgba(52,211,153,0.29)" title="2024: 19 → 2025: 25">+31.6%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 5 → 2025: 2">-60.0%</td></tr><tr><td class="bn">山东</td><td class="neg" style="background:rgba(248,113,113,0.13)" title="2024: 1,000 → 2025: 651">-10.6%</td><td class="pos" style="background:rgba(52,211,153,0.09)" title="2024: 376 → 2025: 398">+5.8%</td><td class="pos" style="background:rgba(52,211,153,0.12)" title="2024: 277 → 2025: 301">+8.9%</td><td class="pos" style="background:rgba(52,211,153,0.08)" title="2024: 152 → 2025: 158">+4.1%</td><td class="pos" style="background:rgba(52,211,153,0.11)" title="2024: 76 → 2025: 83">+8.2%</td><td class="neg" style="background:rgba(248,113,113,0.09)" title="2024: 59 → 2025: 56">-5.1%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 17 → 2025: 30">+76.5%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 1 → 2025: 6">+500.0%</td></tr><tr><td class="bn">河南</td><td class="neg" style="background:rgba(248,113,113,0.07)" title="2024: 464 → 2025: 449">-3.3%</td><td class="pos" style="background:rgba(52,211,153,0.06)" title="2024: 210 → 2025: 212">+1.0%</td><td class="neg" style="background:rgba(248,113,113,0.08)" title="2024: 143 → 2025: 137">-4.4%</td><td class="pos" style="background:rgba(52,211,153,0.06)" title="2024: 72 → 2025: 73">+1.2%</td><td class="neg" style="background:rgba(248,113,113,0.07)" title="2024: 35 → 2025: 34">-2.8%</td><td class="neg" style="background:rgba(248,113,113,0.31)" title="2024: 25 → 2025: 17">-34.1%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 3 → 2025: 8">+166.7%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 0 → 2025: 2">+0.0%</td></tr><tr><td class="bn">吉林</td><td class="neg" style="background:rgba(248,113,113,0.19)" title="2024: 284 → 2025: 232">-18.1%</td><td class="neg" style="background:rgba(248,113,113,0.13)" title="2024: 152 → 2025: 136">-10.3%</td><td class="neg" style="background:rgba(248,113,113,0.10)" title="2024: 126 → 2025: 118">-7.0%</td><td class="neg" style="background:rgba(248,113,113,0.07)" title="2024: 54 → 2025: 53">-3.2%</td><td class="neg" style="background:rgba(248,113,113,0.20)" title="2024: 24 → 2025: 19">-20.2%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 16 → 2025: 10">-39.8%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 4 → 2025: 6">+50.0%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 2 → 2025: 3">+50.0%</td></tr><tr><td class="bn">江苏</td><td class="neg" style="background:rgba(248,113,113,0.11)" title="2024: 194 → 2025: 179">-8.0%</td><td class="neg" style="background:rgba(248,113,113,0.06)" title="2024: 100 → 2025: 99">-0.7%</td><td class="pos" style="background:rgba(52,211,153,0.08)" title="2024: 68 → 2025: 71">+3.8%</td><td class="neg" style="background:rgba(248,113,113,0.06)" title="2024: 39 → 2025: 39">-1.8%</td><td class="pos" style="background:rgba(52,211,153,0.13)" title="2024: 23 → 2025: 25">+11.3%</td><td class="neg" style="background:rgba(248,113,113,0.06)" title="2024: 20 → 2025: 20">-0.7%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 10 → 2025: 23">+130.0%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 2 → 2025: 0">-100.0%</td></tr><tr><td class="bn">青岛</td><td class="pos" style="background:rgba(52,211,153,0.21)" title="2024: 133 → 2025: 161">+20.8%</td><td class="pos" style="background:rgba(52,211,153,0.08)" title="2024: 87 → 2025: 91">+4.6%</td><td class="pos" style="background:rgba(52,211,153,0.06)" title="2024: 72 → 2025: 73">+1.8%</td><td class="neg" style="background:rgba(248,113,113,0.09)" title="2024: 48 → 2025: 46">-4.8%</td><td class="neg" style="background:rgba(248,113,113,0.09)" title="2024: 31 → 2025: 29">-5.5%</td><td class="neg" style="background:rgba(248,113,113,0.22)" title="2024: 27 → 2025: 21">-22.0%</td><td class="pos" style="background:rgba(52,211,153,0.32)" title="2024: 11 → 2025: 15">+36.4%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 1 → 2025: 1">+0.0%</td></tr><tr><td class="bn">四川</td><td class="neg" style="background:rgba(248,113,113,0.06)" title="2024: 140 → 2025: 139">-0.7%</td><td class="pos" style="background:rgba(52,211,153,0.09)" title="2024: 79 → 2025: 83">+5.4%</td><td class="pos" style="background:rgba(52,211,153,0.12)" title="2024: 55 → 2025: 60">+9.0%</td><td class="neg" style="background:rgba(248,113,113,0.05)" title="2024: 32 → 2025: 32">-0.4%</td><td class="neg" style="background:rgba(248,113,113,0.18)" title="2024: 17 → 2025: 14">-17.2%</td><td class="pos" style="background:rgba(52,211,153,0.07)" title="2024: 11 → 2025: 11">+2.7%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 2 → 2025: 6">+200.0%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 1 → 2025: 1">+0.0%</td></tr><tr><td class="bn">上海</td><td class="neg" style="background:rgba(248,113,113,0.12)" title="2024: 70 → 2025: 63">-10.0%</td><td class="pos" style="background:rgba(52,211,153,0.19)" title="2024: 40 → 2025: 47">+18.2%</td><td class="pos" style="background:rgba(52,211,153,0.31)" title="2024: 32 → 2025: 43">+34.5%</td><td class="pos" style="background:rgba(52,211,153,0.21)" title="2024: 25 → 2025: 30">+20.8%</td><td class="pos" style="background:rgba(52,211,153,0.20)" title="2024: 18 → 2025: 22">+19.8%</td><td class="pos" style="background:rgba(52,211,153,0.08)" title="2024: 16 → 2025: 17">+4.5%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 11 → 2025: 19">+72.7%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 2 → 2025: 3">+50.0%</td></tr><tr><td class="bn">广东</td><td class="neg" style="background:rgba(248,113,113,0.10)" title="2024: 16 → 2025: 15">-6.2%</td><td class="neg" style="background:rgba(248,113,113,0.30)" title="2024: 12 → 2025: 8">-33.3%</td><td class="neg" style="background:rgba(248,113,113,0.22)" title="2024: 9 → 2025: 7">-22.2%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 8 → 2025: 5">-40.4%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 6 → 2025: 3">-44.2%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 6 → 2025: 3">-52.4%</td><td class="neg" style="background:rgba(248,113,113,0.30)" title="2024: 6 → 2025: 4">-33.3%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 2 → 2025: 2">+0.0%</td></tr><tr><td class="bn">北京</td><td class="neg" style="background:rgba(248,113,113,0.28)" title="2024: 16 → 2025: 11">-30.1%</td><td class="neg" style="background:rgba(248,113,113,0.27)" title="2024: 9 → 2025: 6">-29.0%</td><td class="neg" style="background:rgba(248,113,113,0.23)" title="2024: 8 → 2025: 6">-24.1%</td><td class="neg" style="background:rgba(248,113,113,0.27)" title="2024: 7 → 2025: 5">-29.2%</td><td class="neg" style="background:rgba(248,113,113,0.24)" title="2024: 6 → 2025: 4">-25.0%</td><td class="neg" style="background:rgba(248,113,113,0.19)" title="2024: 5 → 2025: 4">-18.7%</td><td class="neg" style="background:rgba(248,113,113,0.35)" title="2024: 5 → 2025: 3">-40.0%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 1 → 2025: 1">+0.0%</td></tr><tr><td class="bn">系统</td><td class="neg" style="background:rgba(248,113,113,0.11)" title="2024: 3,057 → 2025: 2,572">-7.7%</td><td class="neg" style="background:rgba(248,113,113,0.07)" title="2024: 1,476 → 2025: 1,446">-2.0%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 1,058 → 2025: 1,061">+0.3%</td><td class="pos" style="background:rgba(52,211,153,0.05)" title="2024: 577 → 2025: 579">+0.2%</td><td class="neg" style="background:rgba(248,113,113,0.06)" title="2024: 310 → 2025: 304">-1.8%</td><td class="neg" style="background:rgba(248,113,113,0.16)" title="2024: 241 → 2025: 205">-14.9%</td><td class="pos" style="background:rgba(52,211,153,0.35)" title="2024: 88 → 2025: 139">+58.0%</td><td class="pos" style="background:rgba(52,211,153,0.23)" title="2024: 17 → 2025: 21">+23.5%</td></tr></tbody></table>
+    </section>
+
+    <section class="card s12">
+      <h2><span class="ht">人力结构明细</span> <b>每格三数据：大字＝2025 月均｜灰字＝2024 基期｜彩字＝同比｜金条＝10 家内相对水平｜悬停看换算｜点击行下钻</b></h2>
+      <table class="dt rdt"><thead><tr><th>分公司</th><th>主管人力</th><th>1500C</th><th>3000C</th><th>6000C</th><th>10000C</th><th>12000C</th><th>1500C占比</th><th>3000C占比</th><th>6000C占比</th><th>10000C占比</th><th>12000C占比</th></tr></thead><tbody><tr class="" data-b="河北"><td class="bn">河北</td><td class="rc" title="2024 740 → 2025 672"><i class="rb" style="width:100.0%"></i><span class="rv">672</span><span class="rl"><span class="old">740</span><span class="ry neg">↓ 9.2%</span></span></td><td class="rc" title="2024 412 → 2025 365"><i class="rb" style="width:91.6%"></i><span class="rv">365</span><span class="rl"><span class="old">412</span><span class="ry neg">↓ 11.4%</span></span></td><td class="rc" title="2024 268 → 2025 245"><i class="rb" style="width:81.4%"></i><span class="rv">245</span><span class="rl"><span class="old">268</span><span class="ry neg">↓ 8.4%</span></span></td><td class="rc" title="2024 140 → 2025 139"><i class="rb" style="width:87.7%"></i><span class="rv">139</span><span class="rl"><span class="old">140</span><span class="ry neg">↓ 0.6%</span></span></td><td class="rc" title="2024 74 → 2025 70"><i class="rb" style="width:85.1%"></i><span class="rv">70</span><span class="rl"><span class="old">74</span><span class="ry neg">↓ 4.7%</span></span></td><td class="rc" title="2024 57 → 2025 48"><i class="rb" style="width:85.8%"></i><span class="rv">48</span><span class="rl"><span class="old">57</span><span class="ry neg">↓ 15.5%</span></span></td><td class="rc" title="2024 55.6% → 2025 54.3%"><i class="rb" style="width:72.5%"></i><span class="rv">54.3%</span><span class="rl"><span class="old">55.6%</span><span class="ry neg">↓ 1.3pp</span></span></td><td class="rc" title="2024 36.2% → 2025 36.5%"><i class="rb" style="width:53.8%"></i><span class="rv">36.5%</span><span class="rl"><span class="old">36.2%</span><span class="ry pos">↑ 0.3pp</span></span></td><td class="rc" title="2024 18.9% → 2025 20.7%"><i class="rb" style="width:43.7%"></i><span class="rv">20.7%</span><span class="rl"><span class="old">18.9%</span><span class="ry pos">↑ 1.8pp</span></span></td><td class="rc" title="2024 10.0% → 2025 10.5%"><i class="rb" style="width:27.6%"></i><span class="rv">10.5%</span><span class="rl"><span class="old">10.0%</span><span class="ry pos">↑ 0.5pp</span></span></td><td class="rc" title="2024 7.7% → 2025 7.2%"><i class="rb" style="width:21.8%"></i><span class="rv">7.2%</span><span class="rl"><span class="old">7.7%</span><span class="ry neg">↓ 0.5pp</span></span></td></tr><tr class="" data-b="山东"><td class="bn">山东</td><td class="rc" title="2024 1,000 → 2025 651"><i class="rb" style="width:97.0%"></i><span class="rv">651</span><span class="rl"><span class="old">1,000</span><span class="ry neg">↓ 10.6%</span></span></td><td class="rc" title="2024 376 → 2025 398"><i class="rb" style="width:100.0%"></i><span class="rv">398</span><span class="rl"><span class="old">376</span><span class="ry pos">↑ 5.8%</span></span></td><td class="rc" title="2024 277 → 2025 301"><i class="rb" style="width:100.0%"></i><span class="rv">301</span><span class="rl"><span class="old">277</span><span class="ry pos">↑ 8.9%</span></span></td><td class="rc" title="2024 152 → 2025 158"><i class="rb" style="width:100.0%"></i><span class="rv">158</span><span class="rl"><span class="old">152</span><span class="ry pos">↑ 4.1%</span></span></td><td class="rc" title="2024 76 → 2025 83"><i class="rb" style="width:100.0%"></i><span class="rv">83</span><span class="rl"><span class="old">76</span><span class="ry pos">↑ 8.2%</span></span></td><td class="rc" title="2024 59 → 2025 56"><i class="rb" style="width:100.0%"></i><span class="rv">56</span><span class="rl"><span class="old">59</span><span class="ry neg">↓ 5.1%</span></span></td><td class="rc" title="2024 51.6% → 2025 61.1%"><i class="rb" style="width:81.6%"></i><span class="rv">61.1%</span><span class="rl"><span class="old">51.6%</span><span class="ry pos">↑ 9.5pp</span></span></td><td class="rc" title="2024 38.0% → 2025 46.2%"><i class="rb" style="width:68.1%"></i><span class="rv">46.2%</span><span class="rl"><span class="old">38.0%</span><span class="ry pos">↑ 8.3pp</span></span></td><td class="rc" title="2024 20.8% → 2025 24.3%"><i class="rb" style="width:51.3%"></i><span class="rv">24.3%</span><span class="rl"><span class="old">20.8%</span><span class="ry pos">↑ 3.4pp</span></span></td><td class="rc" title="2024 10.5% → 2025 12.7%"><i class="rb" style="width:33.4%"></i><span class="rv">12.7%</span><span class="rl"><span class="old">10.5%</span><span class="ry pos">↑ 2.2pp</span></span></td><td class="rc" title="2024 8.1% → 2025 8.6%"><i class="rb" style="width:26.2%"></i><span class="rv">8.6%</span><span class="rl"><span class="old">8.1%</span><span class="ry pos">↑ 0.5pp</span></span></td></tr><tr class="" data-b="河南"><td class="bn">河南</td><td class="rc" title="2024 464 → 2025 449"><i class="rb" style="width:66.8%"></i><span class="rv">449</span><span class="rl"><span class="old">464</span><span class="ry neg">↓ 3.3%</span></span></td><td class="rc" title="2024 210 → 2025 212"><i class="rb" style="width:53.2%"></i><span class="rv">212</span><span class="rl"><span class="old">210</span><span class="ry pos">↑ 1.0%</span></span></td><td class="rc" title="2024 143 → 2025 137"><i class="rb" style="width:45.5%"></i><span class="rv">137</span><span class="rl"><span class="old">143</span><span class="ry neg">↓ 4.4%</span></span></td><td class="rc" title="2024 72 → 2025 73"><i class="rb" style="width:46.2%"></i><span class="rv">73</span><span class="rl"><span class="old">72</span><span class="ry pos">↑ 1.2%</span></span></td><td class="rc" title="2024 35 → 2025 34"><i class="rb" style="width:41.3%"></i><span class="rv">34</span><span class="rl"><span class="old">35</span><span class="ry neg">↓ 2.8%</span></span></td><td class="rc" title="2024 25 → 2025 17"><i class="rb" style="width:29.5%"></i><span class="rv">17</span><span class="rl"><span class="old">25</span><span class="ry neg">↓ 34.1%</span></span></td><td class="rc" title="2024 45.2% → 2025 47.2%"><i class="rb" style="width:63.0%"></i><span class="rv">47.2%</span><span class="rl"><span class="old">45.2%</span><span class="ry pos">↑ 2.0pp</span></span></td><td class="rc" title="2024 30.9% → 2025 30.6%"><i class="rb" style="width:45.0%"></i><span class="rv">30.6%</span><span class="rl"><span class="old">30.9%</span><span class="ry neg">↓ 0.4pp</span></span></td><td class="rc" title="2024 15.5% → 2025 16.3%"><i class="rb" style="width:34.4%"></i><span class="rv">16.3%</span><span class="rl"><span class="old">15.5%</span><span class="ry pos">↑ 0.7pp</span></span></td><td class="rc" title="2024 7.6% → 2025 7.6%"><i class="rb" style="width:20.0%"></i><span class="rv">7.6%</span><span class="rl"><span class="old">7.6%</span><span class="ry pos">↑ 0.0pp</span></span></td><td class="rc" title="2024 5.4% → 2025 3.7%"><i class="rb" style="width:11.2%"></i><span class="rv">3.7%</span><span class="rl"><span class="old">5.4%</span><span class="ry neg">↓ 1.7pp</span></span></td></tr><tr class="" data-b="吉林"><td class="bn">吉林</td><td class="rc" title="2024 284 → 2025 232"><i class="rb" style="width:34.6%"></i><span class="rv">232</span><span class="rl"><span class="old">284</span><span class="ry neg">↓ 18.1%</span></span></td><td class="rc" title="2024 152 → 2025 136"><i class="rb" style="width:34.2%"></i><span class="rv">136</span><span class="rl"><span class="old">152</span><span class="ry neg">↓ 10.3%</span></span></td><td class="rc" title="2024 126 → 2025 118"><i class="rb" style="width:39.0%"></i><span class="rv">118</span><span class="rl"><span class="old">126</span><span class="ry neg">↓ 7.0%</span></span></td><td class="rc" title="2024 54 → 2025 53"><i class="rb" style="width:33.2%"></i><span class="rv">53</span><span class="rl"><span class="old">54</span><span class="ry neg">↓ 3.2%</span></span></td><td class="rc" title="2024 24 → 2025 19"><i class="rb" style="width:23.2%"></i><span class="rv">19</span><span class="rl"><span class="old">24</span><span class="ry neg">↓ 20.2%</span></span></td><td class="rc" title="2024 16 → 2025 10"><i class="rb" style="width:17.3%"></i><span class="rv">10</span><span class="rl"><span class="old">16</span><span class="ry neg">↓ 39.8%</span></span></td><td class="rc" title="2024 53.6% → 2025 58.7%"><i class="rb" style="width:78.3%"></i><span class="rv">58.7%</span><span class="rl"><span class="old">53.6%</span><span class="ry pos">↑ 5.1pp</span></span></td><td class="rc" title="2024 44.6% → 2025 50.6%"><i class="rb" style="width:74.6%"></i><span class="rv">50.6%</span><span class="rl"><span class="old">44.6%</span><span class="ry pos">↑ 6.0pp</span></span></td><td class="rc" title="2024 19.1% → 2025 22.6%"><i class="rb" style="width:47.9%"></i><span class="rv">22.6%</span><span class="rl"><span class="old">19.1%</span><span class="ry pos">↑ 3.5pp</span></span></td><td class="rc" title="2024 8.5% → 2025 8.2%"><i class="rb" style="width:21.7%"></i><span class="rv">8.2%</span><span class="rl"><span class="old">8.5%</span><span class="ry neg">↓ 0.2pp</span></span></td><td class="rc" title="2024 5.7% → 2025 4.2%"><i class="rb" style="width:12.7%"></i><span class="rv">4.2%</span><span class="rl"><span class="old">5.7%</span><span class="ry neg">↓ 1.5pp</span></span></td></tr><tr class="" data-b="江苏"><td class="bn">江苏</td><td class="rc" title="2024 194 → 2025 179"><i class="rb" style="width:26.6%"></i><span class="rv">179</span><span class="rl"><span class="old">194</span><span class="ry neg">↓ 8.0%</span></span></td><td class="rc" title="2024 100 → 2025 99"><i class="rb" style="width:24.9%"></i><span class="rv">99</span><span class="rl"><span class="old">100</span><span class="ry neg">↓ 0.7%</span></span></td><td class="rc" title="2024 68 → 2025 71"><i class="rb" style="width:23.4%"></i><span class="rv">71</span><span class="rl"><span class="old">68</span><span class="ry pos">↑ 3.8%</span></span></td><td class="rc" title="2024 39 → 2025 39"><i class="rb" style="width:24.5%"></i><span class="rv">39</span><span class="rl"><span class="old">39</span><span class="ry neg">↓ 1.8%</span></span></td><td class="rc" title="2024 23 → 2025 25"><i class="rb" style="width:30.6%"></i><span class="rv">25</span><span class="rl"><span class="old">23</span><span class="ry pos">↑ 11.3%</span></span></td><td class="rc" title="2024 20 → 2025 20"><i class="rb" style="width:35.9%"></i><span class="rv">20</span><span class="rl"><span class="old">20</span><span class="ry neg">↓ 0.7%</span></span></td><td class="rc" title="2024 51.4% → 2025 55.5%"><i class="rb" style="width:74.1%"></i><span class="rv">55.5%</span><span class="rl"><span class="old">51.4%</span><span class="ry pos">↑ 4.1pp</span></span></td><td class="rc" title="2024 35.0% → 2025 39.5%"><i class="rb" style="width:58.1%"></i><span class="rv">39.5%</span><span class="rl"><span class="old">35.0%</span><span class="ry pos">↑ 4.5pp</span></span></td><td class="rc" title="2024 20.3% → 2025 21.6%"><i class="rb" style="width:45.8%"></i><span class="rv">21.6%</span><span class="rl"><span class="old">20.3%</span><span class="ry pos">↑ 1.4pp</span></span></td><td class="rc" title="2024 11.7% → 2025 14.1%"><i class="rb" style="width:37.2%"></i><span class="rv">14.1%</span><span class="rl"><span class="old">11.7%</span><span class="ry pos">↑ 2.5pp</span></span></td><td class="rc" title="2024 10.4% → 2025 11.3%"><i class="rb" style="width:34.2%"></i><span class="rv">11.3%</span><span class="rl"><span class="old">10.4%</span><span class="ry pos">↑ 0.8pp</span></span></td></tr><tr class="" data-b="青岛"><td class="bn">青岛</td><td class="rc" title="2024 133 → 2025 161"><i class="rb" style="width:23.9%"></i><span class="rv">161</span><span class="rl"><span class="old">133</span><span class="ry pos">↑ 20.8%</span></span></td><td class="rc" title="2024 87 → 2025 91"><i class="rb" style="width:22.9%"></i><span class="rv">91</span><span class="rl"><span class="old">87</span><span class="ry pos">↑ 4.6%</span></span></td><td class="rc" title="2024 72 → 2025 73"><i class="rb" style="width:24.4%"></i><span class="rv">73</span><span class="rl"><span class="old">72</span><span class="ry pos">↑ 1.8%</span></span></td><td class="rc" title="2024 48 → 2025 46"><i class="rb" style="width:28.8%"></i><span class="rv">46</span><span class="rl"><span class="old">48</span><span class="ry neg">↓ 4.8%</span></span></td><td class="rc" title="2024 31 → 2025 29"><i class="rb" style="width:35.5%"></i><span class="rv">29</span><span class="rl"><span class="old">31</span><span class="ry neg">↓ 5.5%</span></span></td><td class="rc" title="2024 27 → 2025 21"><i class="rb" style="width:36.9%"></i><span class="rv">21</span><span class="rl"><span class="old">27</span><span class="ry neg">↓ 22.0%</span></span></td><td class="rc" title="2024 65.4% → 2025 56.6%"><i class="rb" style="width:75.6%"></i><span class="rv">56.6%</span><span class="rl"><span class="old">65.4%</span><span class="ry neg">↓ 8.8pp</span></span></td><td class="rc" title="2024 54.2% → 2025 45.7%"><i class="rb" style="width:67.3%"></i><span class="rv">45.7%</span><span class="rl"><span class="old">54.2%</span><span class="ry neg">↓ 8.6pp</span></span></td><td class="rc" title="2024 36.0% → 2025 28.4%"><i class="rb" style="width:60.0%"></i><span class="rv">28.4%</span><span class="rl"><span class="old">36.0%</span><span class="ry neg">↓ 7.6pp</span></span></td><td class="rc" title="2024 23.3% → 2025 18.2%"><i class="rb" style="width:48.0%"></i><span class="rv">18.2%</span><span class="rl"><span class="old">23.3%</span><span class="ry neg">↓ 5.1pp</span></span></td><td class="rc" title="2024 20.0% → 2025 12.9%"><i class="rb" style="width:39.2%"></i><span class="rv">12.9%</span><span class="rl"><span class="old">20.0%</span><span class="ry neg">↓ 7.1pp</span></span></td></tr><tr class="" data-b="四川"><td class="bn">四川</td><td class="rc" title="2024 140 → 2025 139"><i class="rb" style="width:20.7%"></i><span class="rv">139</span><span class="rl"><span class="old">140</span><span class="ry neg">↓ 0.7%</span></span></td><td class="rc" title="2024 79 → 2025 83"><i class="rb" style="width:20.8%"></i><span class="rv">83</span><span class="rl"><span class="old">79</span><span class="ry pos">↑ 5.4%</span></span></td><td class="rc" title="2024 55 → 2025 60"><i class="rb" style="width:20.1%"></i><span class="rv">60</span><span class="rl"><span class="old">55</span><span class="ry pos">↑ 9.0%</span></span></td><td class="rc" title="2024 32 → 2025 32"><i class="rb" style="width:20.4%"></i><span class="rv">32</span><span class="rl"><span class="old">32</span><span class="ry neg">↓ 0.4%</span></span></td><td class="rc" title="2024 17 → 2025 14"><i class="rb" style="width:17.5%"></i><span class="rv">14</span><span class="rl"><span class="old">17</span><span class="ry neg">↓ 17.2%</span></span></td><td class="rc" title="2024 11 → 2025 11"><i class="rb" style="width:19.3%"></i><span class="rv">11</span><span class="rl"><span class="old">11</span><span class="ry pos">↑ 2.7%</span></span></td><td class="rc" title="2024 56.2% → 2025 59.7%"><i class="rb" style="width:79.7%"></i><span class="rv">59.7%</span><span class="rl"><span class="old">56.2%</span><span class="ry pos">↑ 3.5pp</span></span></td><td class="rc" title="2024 39.6% → 2025 43.5%"><i class="rb" style="width:64.1%"></i><span class="rv">43.5%</span><span class="rl"><span class="old">39.6%</span><span class="ry pos">↑ 3.9pp</span></span></td><td class="rc" title="2024 23.2% → 2025 23.2%"><i class="rb" style="width:49.1%"></i><span class="rv">23.2%</span><span class="rl"><span class="old">23.2%</span><span class="ry pos">↑ 0.1pp</span></span></td><td class="rc" title="2024 12.4% → 2025 10.4%"><i class="rb" style="width:27.3%"></i><span class="rv">10.4%</span><span class="rl"><span class="old">12.4%</span><span class="ry neg">↓ 2.1pp</span></span></td><td class="rc" title="2024 7.6% → 2025 7.8%"><i class="rb" style="width:23.7%"></i><span class="rv">7.8%</span><span class="rl"><span class="old">7.6%</span><span class="ry pos">↑ 0.3pp</span></span></td></tr><tr class="" data-b="上海"><td class="bn">上海</td><td class="rc" title="2024 70 → 2025 63"><i class="rb" style="width:9.4%"></i><span class="rv">63</span><span class="rl"><span class="old">70</span><span class="ry neg">↓ 10.0%</span></span></td><td class="rc" title="2024 40 → 2025 47"><i class="rb" style="width:11.9%"></i><span class="rv">47</span><span class="rl"><span class="old">40</span><span class="ry pos">↑ 18.2%</span></span></td><td class="rc" title="2024 32 → 2025 43"><i class="rb" style="width:14.2%"></i><span class="rv">43</span><span class="rl"><span class="old">32</span><span class="ry pos">↑ 34.5%</span></span></td><td class="rc" title="2024 25 → 2025 30"><i class="rb" style="width:18.9%"></i><span class="rv">30</span><span class="rl"><span class="old">25</span><span class="ry pos">↑ 20.8%</span></span></td><td class="rc" title="2024 18 → 2025 22"><i class="rb" style="width:26.1%"></i><span class="rv">22</span><span class="rl"><span class="old">18</span><span class="ry pos">↑ 19.8%</span></span></td><td class="rc" title="2024 16 → 2025 17"><i class="rb" style="width:29.5%"></i><span class="rv">17</span><span class="rl"><span class="old">16</span><span class="ry pos">↑ 4.5%</span></span></td><td class="rc" title="2024 57.0% → 2025 74.9%"><i class="rb" style="width:100.0%"></i><span class="rv">74.9%</span><span class="rl"><span class="old">57.0%</span><span class="ry pos">↑ 17.9pp</span></span></td><td class="rc" title="2024 45.4% → 2025 67.9%"><i class="rb" style="width:100.0%"></i><span class="rv">67.9%</span><span class="rl"><span class="old">45.4%</span><span class="ry pos">↑ 22.5pp</span></span></td><td class="rc" title="2024 35.2% → 2025 47.3%"><i class="rb" style="width:100.0%"></i><span class="rv">47.3%</span><span class="rl"><span class="old">35.2%</span><span class="ry pos">↑ 12.1pp</span></span></td><td class="rc" title="2024 25.7% → 2025 34.2%"><i class="rb" style="width:90.0%"></i><span class="rv">34.2%</span><span class="rl"><span class="old">25.7%</span><span class="ry pos">↑ 8.5pp</span></span></td><td class="rc" title="2024 22.6% → 2025 26.2%"><i class="rb" style="width:79.7%"></i><span class="rv">26.2%</span><span class="rl"><span class="old">22.6%</span><span class="ry pos">↑ 3.6pp</span></span></td></tr><tr class="" data-b="广东"><td class="bn">广东</td><td class="rc" title="2024 16 → 2025 15"><i class="rb" style="width:2.2%"></i><span class="rv">15</span><span class="rl"><span class="old">16</span><span class="ry neg">↓ 6.2%</span></span></td><td class="rc" title="2024 12 → 2025 8"><i class="rb" style="width:1.9%"></i><span class="rv">8</span><span class="rl"><span class="old">12</span><span class="ry neg">↓ 33.3%</span></span></td><td class="rc" title="2024 9 → 2025 7"><i class="rb" style="width:2.3%"></i><span class="rv">7</span><span class="rl"><span class="old">9</span><span class="ry neg">↓ 22.2%</span></span></td><td class="rc" title="2024 8 → 2025 5"><i class="rb" style="width:3.1%"></i><span class="rv">5</span><span class="rl"><span class="old">8</span><span class="ry neg">↓ 40.4%</span></span></td><td class="rc" title="2024 6 → 2025 3"><i class="rb" style="width:4.2%"></i><span class="rv">3</span><span class="rl"><span class="old">6</span><span class="ry neg">↓ 44.2%</span></span></td><td class="rc" title="2024 6 → 2025 3"><i class="rb" style="width:5.1%"></i><span class="rv">3</span><span class="rl"><span class="old">6</span><span class="ry neg">↓ 52.4%</span></span></td><td class="rc" title="2024 72.3% → 2025 51.4%"><i class="rb" style="width:68.7%"></i><span class="rv">51.4%</span><span class="rl"><span class="old">72.3%</span><span class="ry neg">↓ 20.9pp</span></span></td><td class="rc" title="2024 56.2% → 2025 46.7%"><i class="rb" style="width:68.8%"></i><span class="rv">46.7%</span><span class="rl"><span class="old">56.2%</span><span class="ry neg">↓ 9.6pp</span></span></td><td class="rc" title="2024 50.9% → 2025 32.4%"><i class="rb" style="width:68.5%"></i><span class="rv">32.4%</span><span class="rl"><span class="old">50.9%</span><span class="ry neg">↓ 18.5pp</span></span></td><td class="rc" title="2024 38.4% → 2025 22.9%"><i class="rb" style="width:60.2%"></i><span class="rv">22.9%</span><span class="rl"><span class="old">38.4%</span><span class="ry neg">↓ 15.5pp</span></span></td><td class="rc" title="2024 37.5% → 2025 19.0%"><i class="rb" style="width:57.9%"></i><span class="rv">19.0%</span><span class="rl"><span class="old">37.5%</span><span class="ry neg">↓ 18.5pp</span></span></td></tr><tr class="" data-b="北京"><td class="bn">北京</td><td class="rc" title="2024 16 → 2025 11"><i class="rb" style="width:1.7%"></i><span class="rv">11</span><span class="rl"><span class="old">16</span><span class="ry neg">↓ 30.1%</span></span></td><td class="rc" title="2024 9 → 2025 6"><i class="rb" style="width:1.6%"></i><span class="rv">6</span><span class="rl"><span class="old">9</span><span class="ry neg">↓ 29.0%</span></span></td><td class="rc" title="2024 8 → 2025 6"><i class="rb" style="width:1.9%"></i><span class="rv">6</span><span class="rl"><span class="old">8</span><span class="ry neg">↓ 24.1%</span></span></td><td class="rc" title="2024 7 → 2025 5"><i class="rb" style="width:3.1%"></i><span class="rv">5</span><span class="rl"><span class="old">7</span><span class="ry neg">↓ 29.2%</span></span></td><td class="rc" title="2024 6 → 2025 4"><i class="rb" style="width:5.2%"></i><span class="rv">4</span><span class="rl"><span class="old">6</span><span class="ry neg">↓ 25.0%</span></span></td><td class="rc" title="2024 5 → 2025 4"><i class="rb" style="width:6.6%"></i><span class="rv">4</span><span class="rl"><span class="old">5</span><span class="ry neg">↓ 18.7%</span></span></td><td class="rc" title="2024 54.9% → 2025 55.7%"><i class="rb" style="width:74.4%"></i><span class="rv">55.7%</span><span class="rl"><span class="old">54.9%</span><span class="ry pos">↑ 0.8pp</span></span></td><td class="rc" title="2024 47.8% → 2025 51.9%"><i class="rb" style="width:76.5%"></i><span class="rv">51.9%</span><span class="rl"><span class="old">47.8%</span><span class="ry pos">↑ 4.1pp</span></span></td><td class="rc" title="2024 42.5% → 2025 43.0%"><i class="rb" style="width:91.0%"></i><span class="rv">43.0%</span><span class="rl"><span class="old">42.5%</span><span class="ry pos">↑ 0.6pp</span></span></td><td class="rc" title="2024 35.4% → 2025 38.0%"><i class="rb" style="width:100.0%"></i><span class="rv">38.0%</span><span class="rl"><span class="old">35.4%</span><span class="ry pos">↑ 2.6pp</span></span></td><td class="rc" title="2024 28.3% → 2025 32.9%"><i class="rb" style="width:100.0%"></i><span class="rv">32.9%</span><span class="rl"><span class="old">28.3%</span><span class="ry pos">↑ 4.6pp</span></span></td></tr><tr class="tot" data-b="合计"><td class="bn">系统</td><td class="rc" title="2024 3,057 → 2025 2,572"><span class="rv">2,572</span><span class="rl"><span class="old">3,057</span><span class="ry neg">↓ 7.7%</span></span></td><td class="rc" title="2024 1,476 → 2025 1,446"><span class="rv">1,446</span><span class="rl"><span class="old">1,476</span><span class="ry neg">↓ 2.0%</span></span></td><td class="rc" title="2024 1,058 → 2025 1,061"><span class="rv">1,061</span><span class="rl"><span class="old">1,058</span><span class="ry pos">↑ 0.3%</span></span></td><td class="rc" title="2024 577 → 2025 579"><span class="rv">579</span><span class="rl"><span class="old">577</span><span class="ry pos">↑ 0.2%</span></span></td><td class="rc" title="2024 310 → 2025 304"><span class="rv">304</span><span class="rl"><span class="old">310</span><span class="ry neg">↓ 1.8%</span></span></td><td class="rc" title="2024 241 → 2025 205"><span class="rv">205</span><span class="rl"><span class="old">241</span><span class="ry neg">↓ 14.9%</span></span></td><td class="rc" title="2024 53.0% → 2025 56.2%"><span class="rv">56.2%</span><span class="rl"><span class="old">53.0%</span><span class="ry pos">↑ 3.2pp</span></span></td><td class="rc" title="2024 38.0% → 2025 41.3%"><span class="rv">41.3%</span><span class="rl"><span class="old">38.0%</span><span class="ry pos">↑ 3.3pp</span></span></td><td class="rc" title="2024 20.7% → 2025 22.5%"><span class="rv">22.5%</span><span class="rl"><span class="old">20.7%</span><span class="ry pos">↑ 1.8pp</span></span></td><td class="rc" title="2024 11.1% → 2025 11.8%"><span class="rv">11.8%</span><span class="rl"><span class="old">11.1%</span><span class="ry pos">↑ 0.7pp</span></span></td><td class="rc" title="2024 8.7% → 2025 8.0%"><span class="rv">8.0%</span><span class="rl"><span class="old">8.7%</span><span class="ry neg">↓ 0.7pp</span></span></td></tr></tbody></table>
+    </section>
+
+    <section class="card s12">
+      <h2><span class="ht">期交人力明细</span> <b>每格三数据：2025 月均 + 2024 基期 + 同比｜金条＝10 家内相对水平｜点击行下钻</b></h2>
+      <table class="dt rdt"><thead><tr><th>分公司</th><th>100万+</th><th>200万+</th><th>300万+</th><th>500万+</th><th>800万+</th><th>1000万+</th></tr></thead><tbody><tr class="" data-b="河北"><td class="bn">河北</td><td class="rc" title="2024 19 → 2025 25"><i class="rb" style="width:83.3%"></i><span class="rv">25</span><span class="rl"><span class="old">19</span><span class="ry pos">↑ 31.6%</span></span></td><td class="rc" title="2024 5 → 2025 2"><i class="rb" style="width:33.3%"></i><span class="rv">2</span><span class="rl"><span class="old">5</span><span class="ry neg">↓ 60.0%</span></span></td><td class="rc" title="2024 1 → 2025 1"><i class="rb" style="width:50.0%"></i><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="山东"><td class="bn">山东</td><td class="rc" title="2024 17 → 2025 30"><i class="rb" style="width:100.0%"></i><span class="rv">30</span><span class="rl"><span class="old">17</span><span class="ry pos">↑ 76.5%</span></span></td><td class="rc" title="2024 1 → 2025 6"><i class="rb" style="width:100.0%"></i><span class="rv">6</span><span class="rl"><span class="old">1</span><span class="ry pos">↑ 500.0%</span></span></td><td class="rc" title="2024 0 → 2025 2"><i class="rb" style="width:100.0%"></i><span class="rv">2</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="河南"><td class="bn">河南</td><td class="rc" title="2024 3 → 2025 8"><i class="rb" style="width:26.7%"></i><span class="rv">8</span><span class="rl"><span class="old">3</span><span class="ry pos">↑ 166.7%</span></span></td><td class="rc" title="2024 0 → 2025 2"><i class="rb" style="width:33.3%"></i><span class="rv">2</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="吉林"><td class="bn">吉林</td><td class="rc" title="2024 4 → 2025 6"><i class="rb" style="width:20.0%"></i><span class="rv">6</span><span class="rl"><span class="old">4</span><span class="ry pos">↑ 50.0%</span></span></td><td class="rc" title="2024 2 → 2025 3"><i class="rb" style="width:50.0%"></i><span class="rv">3</span><span class="rl"><span class="old">2</span><span class="ry pos">↑ 50.0%</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="江苏"><td class="bn">江苏</td><td class="rc" title="2024 10 → 2025 23"><i class="rb" style="width:76.7%"></i><span class="rv">23</span><span class="rl"><span class="old">10</span><span class="ry pos">↑ 130.0%</span></span></td><td class="rc" title="2024 2 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">2</span><span class="ry neg">↓ 100.0%</span></span></td><td class="rc" title="2024 1 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">1</span><span class="ry neg">↓ 100.0%</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="青岛"><td class="bn">青岛</td><td class="rc" title="2024 11 → 2025 15"><i class="rb" style="width:50.0%"></i><span class="rv">15</span><span class="rl"><span class="old">11</span><span class="ry pos">↑ 36.4%</span></span></td><td class="rc" title="2024 1 → 2025 1"><i class="rb" style="width:16.7%"></i><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="四川"><td class="bn">四川</td><td class="rc" title="2024 2 → 2025 6"><i class="rb" style="width:20.0%"></i><span class="rv">6</span><span class="rl"><span class="old">2</span><span class="ry pos">↑ 200.0%</span></span></td><td class="rc" title="2024 1 → 2025 1"><i class="rb" style="width:16.7%"></i><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 1 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">1</span><span class="ry neg">↓ 100.0%</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="上海"><td class="bn">上海</td><td class="rc" title="2024 11 → 2025 19"><i class="rb" style="width:63.3%"></i><span class="rv">19</span><span class="rl"><span class="old">11</span><span class="ry pos">↑ 72.7%</span></span></td><td class="rc" title="2024 2 → 2025 3"><i class="rb" style="width:50.0%"></i><span class="rv">3</span><span class="rl"><span class="old">2</span><span class="ry pos">↑ 50.0%</span></span></td><td class="rc" title="2024 2 → 2025 2"><i class="rb" style="width:100.0%"></i><span class="rv">2</span><span class="rl"><span class="old">2</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 1 → 2025 1"><i class="rb" style="width:100.0%"></i><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 1"><i class="rb" style="width:100.0%"></i><span class="rv">1</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="广东"><td class="bn">广东</td><td class="rc" title="2024 6 → 2025 4"><i class="rb" style="width:13.3%"></i><span class="rv">4</span><span class="rl"><span class="old">6</span><span class="ry neg">↓ 33.3%</span></span></td><td class="rc" title="2024 2 → 2025 2"><i class="rb" style="width:33.3%"></i><span class="rv">2</span><span class="rl"><span class="old">2</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 2 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">2</span><span class="ry neg">↓ 100.0%</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="" data-b="北京"><td class="bn">北京</td><td class="rc" title="2024 5 → 2025 3"><i class="rb" style="width:10.0%"></i><span class="rv">3</span><span class="rl"><span class="old">5</span><span class="ry neg">↓ 40.0%</span></span></td><td class="rc" title="2024 1 → 2025 1"><i class="rb" style="width:16.7%"></i><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><i class="rb" style="width:1.5%"></i><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr><tr class="tot" data-b="合计"><td class="bn">系统</td><td class="rc" title="2024 88 → 2025 139"><span class="rv">139</span><span class="rl"><span class="old">88</span><span class="ry pos">↑ 58.0%</span></span></td><td class="rc" title="2024 17 → 2025 21"><span class="rv">21</span><span class="rl"><span class="old">17</span><span class="ry pos">↑ 23.5%</span></span></td><td class="rc" title="2024 7 → 2025 5"><span class="rv">5</span><span class="rl"><span class="old">7</span><span class="ry neg">↓ 28.6%</span></span></td><td class="rc" title="2024 1 → 2025 1"><span class="rv">1</span><span class="rl"><span class="old">1</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 1"><span class="rv">1</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td><td class="rc" title="2024 0 → 2025 0"><span class="rv zer">0</span><span class="rl"><span class="old">0</span><span class="ry mut">持平</span></span></td></tr></tbody></table>
+    </section>
+  </div>
+
+  <footer>
+    本看盘由「<b>网页设计工程师（web-design-engineer）</b>」技能制作（暗金 Executive 风格）<br>
+    数据源：《主管指标_已填充.xlsx》（真实数据，经 Power Query 接入 36 份 Excel：人力清单拆分 18 + 业绩清单拆分 18）<br>
+    口径：月均＝2024/2025 各月平均值；同比＝2025 vs 2024；产能层级为累计口径（达到该台阶人数，含更高台阶），占比相加可超 100%；
+    占比指标的同比为百分点（pp）变化。
+  </footer>
+</div>
+<script>window.__D = {"total": "合计", "branches": ["山东", "广东", "青岛", "江苏", "北京", "上海", "河北", "吉林", "河南", "四川"], "d": {"山东": {"sup": {"v24": 1000.0, "v25": 651.4285714285714, "yoy": -0.1064079952968842}, "c1500": {"v24": 376.2857142857143, "v25": 398.1428571428572, "yoy": 0.05808656036446478}, "r1500": {"v24": 0.516166960611405, "v25": 0.6111842105263158, "yoy": 0.09501724991491078}, "c3000": {"v24": 276.7142857142857, "v25": 301.2857142857143, "yoy": 0.08879710893133706}, "r3000": {"v24": 0.3795806388398981, "v25": 0.4625, "yoy": 0.08291936116010185}, "c6000": {"v24": 151.8571428571429, "v25": 158.1428571428571, "yoy": 0.04139228598306674}, "r6000": {"v24": 0.2083088379384676, "v25": 0.2427631578947368, "yoy": 0.03445431995626924}, "c10000": {"v24": 76.28571428571429, "v25": 82.57142857142857, "yoy": 0.08239700374531823}, "r10000": {"v24": 0.1046443268665491, "v25": 0.1267543859649123, "yoy": 0.02211005909836319}, "c12000": {"v24": 59.14285714285715, "v25": 56.14285714285715, "yoy": -0.05072463768115942}, "r12000": {"v24": 0.08112874779541447, "v25": 0.0861842105263158, "yoy": 0.005055462730901322}, "m100": {"v24": 17.0, "v25": 30.0, "yoy": 0.7647058823529411}, "m200": {"v24": 1.0, "v25": 6.0, "yoy": 5.0}, "m300": {"v24": 0.0, "v25": 2.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "广东": {"sup": {"v24": 16.0, "v25": 15.0, "yoy": -0.0625}, "c1500": {"v24": 11.57142857142857, "v25": 7.714285714285714, "yoy": -0.3333333333333333}, "r1500": {"v24": 0.7232142857142857, "v25": 0.5142857142857143, "yoy": -0.2089285714285714}, "c3000": {"v24": 9.0, "v25": 7.0, "yoy": -0.2222222222222222}, "r3000": {"v24": 0.5625, "v25": 0.4666666666666667, "yoy": -0.09583333333333333}, "c6000": {"v24": 8.142857142857142, "v25": 4.857142857142857, "yoy": -0.4035087719298246}, "r6000": {"v24": 0.5089285714285714, "v25": 0.3238095238095238, "yoy": -0.1851190476190476}, "c10000": {"v24": 6.142857142857143, "v25": 3.428571428571428, "yoy": -0.4418604651162791}, "r10000": {"v24": 0.3839285714285715, "v25": 0.2285714285714286, "yoy": -0.1553571428571429}, "c12000": {"v24": 6.0, "v25": 2.857142857142857, "yoy": -0.5238095238095238}, "r12000": {"v24": 0.375, "v25": 0.1904761904761905, "yoy": -0.1845238095238095}, "m100": {"v24": 6.0, "v25": 4.0, "yoy": -0.3333333333333333}, "m200": {"v24": 2.0, "v25": 2.0, "yoy": 0.0}, "m300": {"v24": 2.0, "v25": 0.0, "yoy": -1.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "青岛": {"sup": {"v24": 133.0, "v25": 160.7142857142857, "yoy": 0.2083780880773363}, "c1500": {"v24": 87.0, "v25": 91.0, "yoy": 0.04597701149425287}, "r1500": {"v24": 0.6541353383458647, "v25": 0.5662222222222222, "yoy": -0.0879131161236425}, "c3000": {"v24": 72.14285714285714, "v25": 73.42857142857143, "yoy": 0.01782178217821791}, "r3000": {"v24": 0.5424274973147153, "v25": 0.4568888888888889, "yoy": -0.08553860842582639}, "c6000": {"v24": 47.85714285714285, "v25": 45.57142857142857, "yoy": -0.04776119402985073}, "r6000": {"v24": 0.359828141783029, "v25": 0.2835555555555555, "yoy": -0.07627258622747346}, "c10000": {"v24": 31.0, "v25": 29.28571428571428, "yoy": -0.05529953917050694}, "r10000": {"v24": 0.2330827067669173, "v25": 0.1822222222222222, "yoy": -0.05086048454469508}, "c12000": {"v24": 26.57142857142857, "v25": 20.71428571428572, "yoy": -0.2204301075268817}, "r12000": {"v24": 0.1997851772287863, "v25": 0.1288888888888889, "yoy": -0.07089628833989739}, "m100": {"v24": 11.0, "v25": 15.0, "yoy": 0.3636363636363636}, "m200": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m300": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "江苏": {"sup": {"v24": 194.4285714285714, "v25": 178.8571428571429, "yoy": -0.08008817046289485}, "c1500": {"v24": 100.0, "v25": 99.28571428571429, "yoy": -0.007142857142857082}, "r1500": {"v24": 0.5143277002204262, "v25": 0.555111821086262, "yoy": 0.04078412086583583}, "c3000": {"v24": 68.0, "v25": 70.57142857142857, "yoy": 0.03781512605042014}, "r3000": {"v24": 0.3497428361498898, "v25": 0.3945686900958466, "yoy": 0.04482585394595678}, "c6000": {"v24": 39.42857142857143, "v25": 38.71428571428572, "yoy": -0.01811594202898553}, "r6000": {"v24": 0.2027920646583395, "v25": 0.2164536741214058, "yoy": 0.01366160946306627}, "c10000": {"v24": 22.71428571428572, "v25": 25.28571428571428, "yoy": 0.1132075471698112}, "r10000": {"v24": 0.1168258633357825, "v25": 0.1413738019169329, "yoy": 0.02454793858115038}, "c12000": {"v24": 20.28571428571428, "v25": 20.14285714285714, "yoy": -0.007042253521126736}, "r12000": {"v24": 0.1043350477590007, "v25": 0.1126198083067093, "yoy": 0.00828476054770852}, "m100": {"v24": 10.0, "v25": 23.0, "yoy": 1.3}, "m200": {"v24": 2.0, "v25": 0.0, "yoy": -1.0}, "m300": {"v24": 1.0, "v25": 0.0, "yoy": -1.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "北京": {"sup": {"v24": 16.14285714285714, "v25": 11.28571428571429, "yoy": -0.3008849557522123}, "c1500": {"v24": 8.857142857142858, "v25": 6.285714285714286, "yoy": -0.2903225806451614}, "r1500": {"v24": 0.5486725663716815, "v25": 0.5569620253164557, "yoy": 0.008289458944774175}, "c3000": {"v24": 7.714285714285714, "v25": 5.857142857142857, "yoy": -0.2407407407407408}, "r3000": {"v24": 0.4778761061946903, "v25": 0.5189873417721518, "yoy": 0.04111123557746149}, "c6000": {"v24": 6.857142857142857, "v25": 4.857142857142857, "yoy": -0.2916666666666667}, "r6000": {"v24": 0.4247787610619469, "v25": 0.430379746835443, "yoy": 0.005600985773496103}, "c10000": {"v24": 5.714285714285714, "v25": 4.285714285714286, "yoy": -0.2500000000000001}, "r10000": {"v24": 0.3539823008849557, "v25": 0.3797468354430379, "yoy": 0.0257645345580822}, "c12000": {"v24": 4.571428571428571, "v25": 3.714285714285714, "yoy": -0.1874999999999999}, "r12000": {"v24": 0.2831858407079646, "v25": 0.3291139240506329, "yoy": 0.04592808334266829}, "m100": {"v24": 5.0, "v25": 3.0, "yoy": -0.4}, "m200": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m300": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "上海": {"sup": {"v24": 70.14285714285714, "v25": 63.14285714285715, "yoy": -0.09979633401221986}, "c1500": {"v24": 40.0, "v25": 47.28571428571428, "yoy": 0.1821428571428571}, "r1500": {"v24": 0.5702647657841141, "v25": 0.7488687782805429, "yoy": 0.1786040124964288}, "c3000": {"v24": 31.85714285714286, "v25": 42.85714285714285, "yoy": 0.3452914798206277}, "r3000": {"v24": 0.4541751527494909, "v25": 0.6787330316742081, "yoy": 0.2245578789247172}, "c6000": {"v24": 24.71428571428572, "v25": 29.85714285714286, "yoy": 0.2080924855491329}, "r6000": {"v24": 0.3523421588594705, "v25": 0.4728506787330317, "yoy": 0.1205085198735611}, "c10000": {"v24": 18.0, "v25": 21.57142857142857, "yoy": 0.1984126984126985}, "r10000": {"v24": 0.2566191446028513, "v25": 0.3416289592760181, "yoy": 0.08500981467316676}, "c12000": {"v24": 15.85714285714286, "v25": 16.57142857142857, "yoy": 0.04504504504504511}, "r12000": {"v24": 0.2260692464358452, "v25": 0.2624434389140272, "yoy": 0.03637419247818194}, "m100": {"v24": 11.0, "v25": 19.0, "yoy": 0.7272727272727273}, "m200": {"v24": 2.0, "v25": 3.0, "yoy": 0.5}, "m300": {"v24": 2.0, "v25": 2.0, "yoy": 0.0}, "m500": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 1.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "河北": {"sup": {"v24": 739.5714285714286, "v25": 671.5714285714286, "yoy": -0.09194514197411628}, "c1500": {"v24": 411.5714285714286, "v25": 364.8571428571428, "yoy": -0.1135022561610552}, "r1500": {"v24": 0.5564999034189685, "v25": 0.5432886619868112, "yoy": -0.01321124143215724}, "c3000": {"v24": 267.7142857142857, "v25": 245.1428571428571, "yoy": -0.0843116328708645}, "r3000": {"v24": 0.3619857060073402, "v25": 0.3650287172941927, "yoy": 0.003043011286852526}, "c6000": {"v24": 139.5714285714286, "v25": 138.7142857142857, "yoy": -0.006141248720573212}, "r6000": {"v24": 0.1887193355225034, "v25": 0.2065517974898958, "yoy": 0.01783246196739238}, "c10000": {"v24": 73.71428571428571, "v25": 70.28571428571429, "yoy": -0.04651162790697658}, "r10000": {"v24": 0.09967162449294958, "v25": 0.1046585832801532, "yoy": 0.00498695878720358}, "c12000": {"v24": 57.0, "v25": 48.14285714285715, "yoy": -0.1553884711779448}, "r12000": {"v24": 0.07707166312536218, "v25": 0.07168687513295044, "yoy": -0.005384787992411738}, "m100": {"v24": 19.0, "v25": 25.0, "yoy": 0.3157894736842105}, "m200": {"v24": 5.0, "v25": 2.0, "yoy": -0.6}, "m300": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "吉林": {"sup": {"v24": 283.5714285714286, "v25": 232.2857142857143, "yoy": -0.1808564231738035}, "c1500": {"v24": 152.0, "v25": 136.2857142857143, "yoy": -0.1033834586466166}, "r1500": {"v24": 0.5360201511335013, "v25": 0.5867158671586715, "yoy": 0.0506957160251702}, "c3000": {"v24": 126.4285714285714, "v25": 117.5714285714286, "yoy": -0.07005649717514127}, "r3000": {"v24": 0.4458438287153653, "v25": 0.506150061500615, "yoy": 0.06030623278524977}, "c6000": {"v24": 54.28571428571428, "v25": 52.57142857142857, "yoy": -0.03157894736842107}, "r6000": {"v24": 0.1914357682619647, "v25": 0.2263222632226322, "yoy": 0.03488649496066748}, "c10000": {"v24": 24.0, "v25": 19.14285714285714, "yoy": -0.2023809523809524}, "r10000": {"v24": 0.08463476070528968, "v25": 0.08241082410824108, "yoy": -0.002223936597048601}, "c12000": {"v24": 16.14285714285714, "v25": 9.714285714285714, "yoy": -0.3982300884955752}, "r12000": {"v24": 0.05692695214105794, "v25": 0.04182041820418204, "yoy": -0.0151065339368759}, "m100": {"v24": 4.0, "v25": 6.0, "yoy": 0.5}, "m200": {"v24": 2.0, "v25": 3.0, "yoy": 0.5}, "m300": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "河南": {"sup": {"v24": 464.0, "v25": 448.8571428571428, "yoy": -0.03263546798029562}, "c1500": {"v24": 209.5714285714286, "v25": 211.7142857142857, "yoy": 0.0102249488752556}, "r1500": {"v24": 0.4516625615763547, "v25": 0.4716740929344367, "yoy": 0.02001153135808198}, "c3000": {"v24": 143.4285714285714, "v25": 137.1428571428571, "yoy": -0.04382470119521907}, "r3000": {"v24": 0.3091133004926108, "v25": 0.305537873965627, "yoy": -0.003575426526983838}, "c6000": {"v24": 72.14285714285714, "v25": 73.0, "yoy": 0.01188118811881194}, "r6000": {"v24": 0.1554802955665024, "v25": 0.1626352641629535, "yoy": 0.007154968596451095}, "c10000": {"v24": 35.14285714285715, "v25": 34.14285714285715, "yoy": -0.02845528455284553}, "r10000": {"v24": 0.07573891625615764, "v25": 0.07606619987269256, "yoy": 0.000327283616534918}, "c12000": {"v24": 25.14285714285714, "v25": 16.57142857142857, "yoy": -0.3409090909090908}, "r12000": {"v24": 0.0541871921182266, "v25": 0.0369191597708466, "yoy": -0.01726803234738}, "m100": {"v24": 3.0, "v25": 8.0, "yoy": 1.666666666666667}, "m200": {"v24": 0.0, "v25": 2.0, "yoy": 0.0}, "m300": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "四川": {"sup": {"v24": 140.0, "v25": 139.0, "yoy": -0.007142857142857143}, "c1500": {"v24": 78.71428571428571, "v25": 83.0, "yoy": 0.05444646098003638}, "r1500": {"v24": 0.5622448979591836, "v25": 0.5971223021582733, "yoy": 0.03487740419908969}, "c3000": {"v24": 55.42857142857143, "v25": 60.42857142857143, "yoy": 0.09020618556701031}, "r3000": {"v24": 0.3959183673469388, "v25": 0.4347379239465571, "yoy": 0.03881955659961828}, "c6000": {"v24": 32.42857142857143, "v25": 32.28571428571428, "yoy": -0.004405286343612428}, "r6000": {"v24": 0.2316326530612245, "v25": 0.2322713257965056, "yoy": 0.0006386727352811483}, "c10000": {"v24": 17.42857142857143, "v25": 14.42857142857143, "yoy": -0.1721311475409835}, "r10000": {"v24": 0.1244897959183673, "v25": 0.1038026721479959, "yoy": -0.02068712377037145}, "c12000": {"v24": 10.57142857142857, "v25": 10.85714285714286, "yoy": 0.0270270270270271}, "r12000": {"v24": 0.07551020408163266, "v25": 0.07810894141829394, "yoy": 0.002598737336661286}, "m100": {"v24": 2.0, "v25": 6.0, "yoy": 2.0}, "m200": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m300": {"v24": 1.0, "v25": 0.0, "yoy": -1.0}, "m500": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}, "合计": {"sup": {"v24": 3056.8571428571427, "v25": 2572.142857142857, "yoy": -0.0767140146659146}, "c1500": {"v24": 1475.571428571429, "v25": 1445.571428571429, "yoy": -0.02033110659308742}, "r1500": {"v24": 0.5296651453771603, "v25": 0.5620105526242711, "yoy": 0.03234540724711088}, "c3000": {"v24": 1058.428571428571, "v25": 1061.285714285714, "yoy": 0.002699419624780703}, "r3000": {"v24": 0.379929234398236, "v25": 0.4126076089975007, "yoy": 0.0326783745992647}, "c6000": {"v24": 577.2857142857143, "v25": 578.5714285714286, "yoy": 0.002227171492204787}, "r6000": {"v24": 0.207220142556792, "v25": 0.2249375173562899, "yoy": 0.01771737479949795}, "c10000": {"v24": 310.1428571428572, "v25": 304.4285714285714, "yoy": -0.01842468908337174}, "r10000": {"v24": 0.1113276242243988, "v25": 0.1183560122188281, "yoy": 0.007028387994429355}, "c12000": {"v24": 241.2857142857143, "v25": 205.4285714285714, "yoy": -0.1486086441681467}, "r12000": {"v24": 0.08661094302856263, "v25": 0.07986670369341851, "yoy": -0.00674423933514412}, "m100": {"v24": 88.0, "v25": 139.0, "yoy": 0.5795454545454546}, "m200": {"v24": 17.0, "v25": 21.0, "yoy": 0.2352941176470588}, "m300": {"v24": 7.0, "v25": 5.0, "yoy": -0.2857142857142857}, "m500": {"v24": 1.0, "v25": 1.0, "yoy": 0.0}, "m800": {"v24": 0.0, "v25": 1.0, "yoy": 0.0}, "m1000": {"v24": 0.0, "v25": 0.0, "yoy": 0.0}}}};</script>
+<script>
+const D = window.__D;
+const TOTAL = D.total;
+const fmt=(v,d)=>v==null?'—':v.toLocaleString('zh-CN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pc=(v)=>v==null?'—':(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+const cls=(v)=>v==null?'':(v>=0?'pos':'neg');
+const arw=(v)=>v==null?'':(v>=0?'↑':'↓');
+const nm=(name)=>name===TOTAL?'系统':name;
+
+/* ---------- 分类指标卡 + 分类诊断 ---------- */
+const ALL_HR=[
+  ['月均主管人力','sup',0],
+  ['1500C 人力','c1500',0],['3000C 人力','c3000',0],['6000C 人力','c6000',0],['10000C 人力','c10000',0],['12000C 人力','c12000',0],
+  ['1500C 占比','r1500',1],['3000C 占比','r3000',1],['6000C 占比','r6000',1],['10000C 占比','r10000',1],['12000C 占比','r12000',1]
+];
+const ALL_FX=[
+  ['100万+','m100',0],['200万+','m200',0],['300万+','m300',0],
+  ['500万+','m500',0],['800万+','m800',0],['1000万+','m1000',0]
+];
+function initCards(id,arr){
+  document.getElementById(id).innerHTML=arr.map(([lbl],i)=>
+    `<div class="kpi" data-i="${id}-${i}"><div class="k-l">${lbl}</div>
+      <div class="k-v" data-v="0">—</div>
+      <div class="k-d">—</div></div>`).join('');
+}
+function paintCards(wrap,d){
+  const arr=wrap==='cardsHr'?ALL_HR:ALL_FX;
+  document.getElementById(wrap).querySelectorAll('.kpi').forEach((el,i)=>{
+    const [_,k,pct]=arr[i],m=d[k];
+    const kv=el.querySelector('.k-v'),kd=el.querySelector('.k-d');
+    const base=pct?(m.v24*100).toFixed(1)+'%':fmt(m.v24,0);
+    kv.textContent=pct?(m.v25*100).toFixed(1)+'%':fmt(m.v25,0);
+    kd.classList.remove('pos','neg');
+    if(m.yoy==null||m.yoy===0){kd.textContent='同比 2024（'+base+'）';}
+    else{
+      kd.classList.add(cls(m.yoy));
+      const txt=pct?((m.yoy>=0?'+':'')+(m.yoy*100).toFixed(1)+'pp'):pc(m.yoy).replace('+','').replace('-','');
+      kd.innerHTML=arw(m.yoy)+' '+txt+' <span>同比 2024（'+base+'）</span>';
+    }
+    el.classList.remove('a-pos','a-neg','a-gold');
+    el.classList.add(m.yoy==null||m.yoy===0?'a-gold':(m.yoy<=-0.10?'a-neg':(m.yoy>=0.10?'a-pos':'a-gold')));
+  });
+}
+function diagHtml(items){
+  if(!items.length) items=[['持平','warn','各项指标同比基本持平，无显著异动']];
+  return items.map(([t,c,s])=>`<div class="ins-item"><span class="ins-tag t-${c}">${t}</span><span>${s}</span></div>`).join('');
+}
+function diagHr(name){
+  const d=D.d[name],out=[];
+  const sup=d.sup.yoy;
+  if(sup==null){}
+  else if(sup<=-0.10) out.push(['风险','neg',`队伍规模同比 <b>${pc(sup)}</b>，收缩明显，需排查人力流失主因`]);
+  else if(sup<0)      out.push(['关注','warn',`队伍规模小幅回落 <b>${pc(sup)}</b>，基本盘略有承压`]);
+  else                out.push(['亮点','pos',`队伍规模逆势增长 <b>${pc(sup)}</b>，为少数扩员机构`]);
+  const c12=d.c12000.yoy;
+  if(c12!=null&&c12<=-0.15) out.push(['风险','neg',`顶端 <b>12000C</b> 人力同比 <b>${pc(c12)}</b>，高端产能流失严重`]);
+  else if(c12!=null&&c12>0) out.push(['亮点','pos',`<b>12000C</b> 顶端人力同比 <b>${pc(c12)}</b>，头部产能稳固`]);
+  const r15=d.r1500.yoy;
+  if(r15!=null&&r15>=0.01) out.push(['亮点','pos',`<b>1500C 占比</b> <b>${(r15*100).toFixed(1)}pp</b>，基础达标层扩容`]);
+  else if(r15!=null&&r15<=-0.01) out.push(['关注','warn',`<b>1500C 占比</b> 降 <b>${Math.abs(r15*100).toFixed(1)}pp</b>，基础盘萎缩`]);
+  const r12=d.r12000.yoy;
+  if(r12!=null&&r12<=-0.005) out.push(['关注','warn',`<b>12000C 占比</b> 降 <b>${Math.abs(r12*100).toFixed(1)}pp</b>，高端占比下滑`]);
+  else if(r12!=null&&r12>0) out.push(['亮点','pos',`<b>12000C 占比</b> 升 <b>+${(r12*100).toFixed(1)}pp</b>，结构向头部集中`]);
+  return diagHtml(out);
+}
+function diagFx(name){
+  const d=D.d[name],out=[];
+  const m1=d.m100.yoy;
+  if(m1!=null&&m1>=0.30) out.push(['亮点','pos',`<b>100万+</b> 高产人力同比 <b>${pc(m1)}</b>，"减量提质"成效显著`]);
+  else if(m1!=null&&m1<0) out.push(['关注','warn',`<b>100万+</b> 高产人力同比 <b>${pc(m1)}</b>，高产端走弱`]);
+  const m2=d.m200.yoy;
+  if(m2!=null&&m2>=0.20) out.push(['亮点','pos',`<b>200万+</b> 同比 <b>${pc(m2)}</b>，二梯队同步扩容`]);
+  else if(m2!=null&&m2<0) out.push(['关注','warn',`<b>200万+</b> 同比 <b>${pc(m2)}</b>，二梯队收缩`]);
+  const m3=d.m300.yoy;
+  if(m3!=null&&m3>0) out.push(['亮点','pos',`<b>300万+</b> 同比 <b>${pc(m3)}</b>，高净值主管涌现`]);
+  else if(m3!=null&&m3<0) out.push(['关注','warn',`<b>300万+</b> 同比 <b>${pc(m3)}</b>`]);
+  if(d.m500.v25<=0) out.push(['关注','warn',`<b>500万+</b> 及以上仍为空白，顶端产能待突破`]);
+  else if(d.m800.v25>0) out.push(['亮点','pos',`<b>800万+</b> 在册 <b>${fmt(d.m800.v25,0)}</b> 人，顶端标杆稳固`]);
+  if(name===TOTAL&&d.m1000.v25<=0) out.push(['关注','warn',`<b>1000万+</b> 全司暂无在册，千万级仍待突破`]);
+  return diagHtml(out);
+}
+
+/* ---------- 焦点切换 ---------- */
+function focus(name){
+  const d=D.d[name];
+  document.getElementById('focName').textContent = nm(name);
+  document.getElementById('focName2').textContent = nm(name);
+  paintCards('cardsHr',d);
+  paintCards('cardsFx',d);
+  document.getElementById('diagHr').innerHTML=diagHr(name);
+  document.getElementById('diagFx').innerHTML=diagFx(name);
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.b===name));
+  document.querySelectorAll('table.dt tbody tr').forEach(r=>r.classList.toggle('sel',r.dataset.b===name));
+}
+
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(c){focus(c.dataset.b);return;}
+  const n=e.target.closest('.ind-item');
+  if(n){curInd=n.dataset.k;
+    document.querySelectorAll('.ind-item').forEach(x=>x.classList.toggle('on',x.dataset.k===curInd));
+    renderInd();return;}
+  const r=e.target.closest('table.dt tbody tr'); if(r&&r.dataset.b){focus(r.dataset.b);return;}
+});
+document.getElementById('tgl').addEventListener('click',()=>document.body.classList.toggle('light'));
+
+/* ---------- 全指标浏览器：17 指标 x 11 机构全数据 ---------- */
+const IND_GROUPS=[
+  ['队伍规模',[['sup','月均主管人力']]],
+  ['产能层级·人力',[['c1500','月均1500C人力'],['c3000','月均3000C人力'],['c6000','月均6000C人力'],['c10000','月均10000C人力'],['c12000','月均12000C人力']]],
+  ['产能层级·占比',[['r1500','1500C 占比'],['r3000','3000C 占比'],['r6000','6000C 占比'],['r10000','10000C 占比'],['r12000','12000C 占比']]],
+  ['高产人力',[['m100','100万及以上'],['m200','200万及以上'],['m300','300万及以上'],['m500','500万及以上'],['m800','800万及以上'],['m1000','1000万及以上']]]
+];
+const PAIR={c1500:'r1500',c3000:'r3000',c6000:'r6000',c10000:'r10000',c12000:'r12000'};
+let curInd='sup';
+function indName(key){
+  for(const [,items] of IND_GROUPS){const f=items.find(x=>x[0]===key);if(f)return f[1];}
+  return key;
+}
+function indVal(key,v){
+  return key[0]==='r' ? (v*100).toFixed(1)+'%' : Math.round(v).toLocaleString('zh-CN');
+}
+function indYoyTxt(key,y){
+  if(y==null)return '持平';
+  return (y>=0?'+':'')+(y*100).toFixed(1)+(key[0]==='r'?'pp':'%');
+}
+function indNav(){
+  document.getElementById('indNav').innerHTML=IND_GROUPS.map(([g,items])=>
+    `<div class="ind-group">${g}</div>`+items.map(([k,l])=>
+      `<button class="ind-item${k===curInd?' on':''}" data-k="${k}">${l}</button>`).join('')).join('');
+}
+function renderInd(){
+  const key=curInd;
+  const t=D.d[TOTAL][key];
+  document.getElementById('indName').textContent=indName(key);
+  // 汇总短语：单行排布（产能层级人力类追加占主管比三格，中间竖线分隔）
+  const items=[
+    ['全司 2024',indVal(key,t.v24),''],
+    ['全司 2025',indVal(key,t.v25),''],
+    ['同比',t.yoy==null?'持平':arw(t.yoy)+' '+indYoyTxt(key,t.yoy),t.yoy==null?'':cls(t.yoy)]
+  ];
+  const pk=PAIR[key];
+  if(pk){
+    const p=D.d[TOTAL][pk];
+    items.push(['占主管比 2024',(p.v24*100).toFixed(1)+'%','',1]);
+    items.push(['占主管比 2025',(p.v25*100).toFixed(1)+'%','']);
+    items.push(['占比同比',p.yoy==null?'持平':indYoyTxt(pk,p.yoy),p.yoy==null?'':cls(p.yoy)]);
+  }
+  const sum=`<div class="ind-sum">`+items.map(([l,v,c,sep])=>
+    `<div${sep?' style="border-left:1px solid var(--line2);padding-left:24px"':''}><span class="is-lbl">${l}</span><b class="${c}">${v}</b></div>`).join('')+`</div>`;
+  document.getElementById('indSum').innerHTML=sum;
+  // 10 家对比条（底 2024 / 面 2025 / 右同比）——适配左栏宽度的紧凑版
+  const bs=D.branches;
+  const mx=Math.max(...bs.map(b=>Math.max(D.d[b][key].v24,D.d[b][key].v25)),1e-9);
+  const ROW=26,BX=80,BW=300;
+  let s=`<svg viewBox="0 0 540 ${bs.length*ROW+22}" class="chart">`;
+  s+=`<defs><linearGradient id="indGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8C6D3F"/><stop offset="1" stop-color="#E3C88F"/></linearGradient></defs>`;
+  bs.forEach((b,i)=>{
+    const d=D.d[b][key],y=i*ROW+6;
+    const w24=Math.max(d.v24/mx*BW,1),w25=Math.max(d.v25/mx*BW,1);
+    s+=`<rect x="${BX}" y="${y+2}" width="${w24.toFixed(1)}" height="13" rx="3" fill="rgba(201,168,106,.28)"/>`;
+    s+=`<rect x="${BX}" y="${y+5.5}" width="${w25.toFixed(1)}" height="7" rx="2" fill="url(#indGrad)"><title>${b} 2025 ${indVal(key,d.v25)}</title></rect>`;
+    s+=`<text x="${BX-8}" y="${y+13}" text-anchor="end" class="s-lbl">${b}</text>`;
+    s+=`<text x="398" y="${y+13}" class="s-val">${indVal(key,d.v25)}</text>`;
+    if(d.yoy==null){
+      s+=`<text x="534" y="${y+13}" text-anchor="end" class="s-tick">持平</text>`;
+    }else{
+      s+=`<text x="534" y="${y+13}" text-anchor="end" class="s-yoy ${d.yoy>=0?'pos':'neg'}">${indYoyTxt(key,d.yoy)}</text>`;
+    }
+  });
+  s+='</svg>';
+  document.getElementById('indChart').innerHTML=s;
+  // 明细：11 行全数据（同比列加红绿微底色）
+  const rows=[...bs,TOTAL];
+  let th=`<tr><th>机构</th><th>2024</th><th>2025</th><th>同比</th>${pk?'<th>占主管比 2025</th>':''}</tr>`;
+  let body='';
+  rows.forEach(b=>{
+    const d=D.d[b][key],tot=b===TOTAL;
+    const tint=d.yoy==null?'':(d.yoy>=0?'background:rgba(52,168,118,.08)':'background:rgba(220,88,88,.08)');
+    body+=`<tr class="${tot?'it-tot':''}"><td class="bn">${tot?'系统':b}</td>
+      <td>${indVal(key,d.v24)}</td><td>${indVal(key,d.v25)}</td>
+      <td class="${d.yoy==null?'mut':cls(d.yoy)}" style="${tint}">${indYoyTxt(key,d.yoy)}</td>
+      ${pk?`<td>${(D.d[b][pk].v25*100).toFixed(1)}%</td>`:''}</tr>`;
+  });
+  document.getElementById('indTable').innerHTML=`<table class="it"><thead>${th}</thead><tbody>${body}</tbody></table>`;
+}
+/* ---------- 初始化 ---------- */
+function initInd(){indNav();renderInd();}
+initCards('cardsHr',ALL_HR);
+initCards('cardsFx',ALL_FX);
+initInd();
+focus(TOTAL);
+</script>
+</body></html>
