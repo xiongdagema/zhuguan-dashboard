@@ -23,16 +23,19 @@ static_bundle/
 3. `git add . && git commit -m "数据更新" && git push`。
 4. 托管平台自动重新发布，链接不变、刷新即时生效（PC 与手机端两个链接一起更新，始终一致）。
 
-## 发布方式（已默认 Gitee Pages，国内手机最快最稳）
-**你只需做一件事**：去 Gitee 生成一个「私人令牌」发我，其余我全包。
-1. 登录 gitee.com → 右上角头像 → 设置 → 左侧「私人令牌」→ 生成新令牌；
-2. 权限勾选 `projects`（或全选只读也可）→ 复制令牌（只显示一次）；
-3. 把令牌发我。我会：建公开仓库 → 推送本文件夹 → 开启 Pages → 把**永久链接**给你。
-- 若想自己推：仓库建好后，`bash deploy.sh <你的令牌>` 即可一键上线（脚本在根目录）。
-- Pages 未自动启动的话，进仓库 → 服务 → Gitee Pages → 选分支、目录 `/` → 点「启动」。
+## 发布方式（已选定 GitHub Pages）
+> 安全须知：GitHub **不支持用账号密码**做 git 推送/API，必须用 **Personal Access Token（PAT）**。请勿在聊天里发密码；请改用下面方式生成可吊销的 PAT。账号密码若已在聊天中出现，请立即去 GitHub 改密码。
 
-## 其他平台（如你指定）
-- **GitHub Pages**：建仓库 → `bash deploy.sh <GitHub令牌> <repo>`（脚本已兼容）→ Settings → Pages 选分支根目录。
+**你只需做一件事**：生成一个 GitHub PAT 发我，其余我全包。
+1. 登录 github.com → 右上角头像 → **Settings** → 左侧最下 **Developer settings** → **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)**；
+2. Note 随便写（如 dashboard），Expiration 选 90 天或 No expiration；**勾选 `repo`（全选 repo 权限）** → Generate；
+3. 复制令牌（以 `ghp_` 开头，只显示一次）发我。我会：`bash deploy_github.sh <PAT>` 一键完成 建公开仓库 → 推送 → 开 Pages → 把**永久链接** `https://<你名>.github.io/zhuguan-dashboard/` 给你。
+
+- 若想自己推：仓库建好后，`bash deploy_github.sh <PAT>` 即可（脚本在根目录）。
+- Pages 未自动开启：进仓库 → Settings → Pages → Source 选分支、目录 /(root) → Save（首次约 1 分钟生效）。
+
+## 其他平台（备选）
+- **Gitee Pages**（国内手机更快）：`bash deploy.sh <Gitee令牌>`，步骤见脚本注释。
 - **Netlify**：拖本文件夹到 app.netlify.com/drop，立即获得链接。
 
 > 注：当前 WorkBuddy 沙箱链接（app.workbuddy.link / sandbox.cloudstudio.club）会空闲回收，不适合做永久链接；本包即用来替代它。
