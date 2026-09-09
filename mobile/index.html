@@ -76,7 +76,7 @@ body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;backgroun
 .controls{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .sel{border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card);color:var(--text);max-width:62%;}.sel-custom{position:relative;display:inline-flex;flex:1;min-width:0;max-width:62%;}
 .sel-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:6px;border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--text);font-size:12px;cursor:pointer;}
-.sel-trigger .sel-arrow{font-size:10px;opacity:.7;}
+.sel-trigger .sel-arrow{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid var(--muted);margin-left:4px;opacity:.8;}
 .sel-dropdown{position:absolute;top:calc(100% + 4px);left:0;z-index:50;min-width:100%;max-width:260px;max-height:260px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:none;padding:4px 0;}
 .sel-dropdown.open{display:block;}
 .sel-option{padding:10px 12px;font-size:12px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap;transition:.15s;}
@@ -154,7 +154,7 @@ body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;backgroun
   </div>
   <div class="controls">
     <div class="sel-custom" id="selIndWrap" style="display:none">
-    <div class="sel-trigger" id="selIndTrigger"><span id="selIndText"></span><span class="sel-arrow">▼</span></div>
+    <div class="sel-trigger" id="selIndTrigger"><span id="selIndText"></span><span class="sel-arrow"></span></div>
     <div class="sel-dropdown" id="selIndDropdown"></div>
   </div>
   <select id="selInd" style="display:none"></select>
