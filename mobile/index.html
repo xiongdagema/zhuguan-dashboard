@@ -74,7 +74,15 @@ body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;backgroun
 .tab-btn{cursor:pointer;flex:1;text-align:center;padding:7px 4px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:12px;}
 .tab-btn.active{border-color:var(--primary);background:var(--accent-soft);font-weight:700;color:var(--primary);}
 .controls{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
-.sel{border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card);color:var(--text);max-width:62%;}
+.sel{border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card);color:var(--text);max-width:62%;}.sel-custom{position:relative;display:inline-flex;flex:1;min-width:0;max-width:62%;}
+.sel-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:6px;border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--text);font-size:12px;cursor:pointer;}
+.sel-trigger .sel-arrow{font-size:10px;opacity:.7;}
+.sel-dropdown{position:absolute;top:calc(100% + 4px);left:0;z-index:50;min-width:100%;max-width:260px;max-height:260px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:none;padding:4px 0;}
+.sel-dropdown.open{display:block;}
+.sel-option{padding:10px 12px;font-size:12px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap;transition:.15s;}
+.sel-option:last-child{border-bottom:none;}
+.sel-option:hover,.sel-option.selected{background:var(--accent-soft);color:var(--primary);}
+.sel-option.selected{font-weight:600;}
 .mode-group{display:flex;gap:4px;}
 .mode-btn{cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;background:var(--card);color:var(--text);}
 .mode-btn.active{border-color:var(--primary);background:var(--accent-soft);color:var(--primary);font-weight:700;}
@@ -145,7 +153,11 @@ body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;backgroun
     <div class="tab-btn" data-cat="各期交人力">各期交人力</div>
   </div>
   <div class="controls">
-    <select class="sel" id="selInd"></select>
+    <div class="sel-custom" id="selIndWrap" style="display:none">
+    <div class="sel-trigger" id="selIndTrigger"><span id="selIndText"></span><span class="sel-arrow">▼</span></div>
+    <div class="sel-dropdown" id="selIndDropdown"></div>
+  </div>
+  <select id="selInd" style="display:none"></select>
     <div class="mode-group" id="modeToggle" style="display:none">
       <button class="mode-btn active" data-mode="count">人数</button>
       <button class="mode-btn" data-mode="ratio">占比</button>
@@ -1787,12 +1799,23 @@ function buildCompare(){
 
 function renderControls(){
   const sel=document.getElementById("selInd");
+  const wrap=document.getElementById("selIndWrap");
+  const triggerText=document.getElementById("selIndText");
+  const dropdown=document.getElementById("selIndDropdown");
   const toggle=document.getElementById("modeToggle");
-  if(curCat==="月均人力"){ sel.style.display="none"; toggle.style.display="none"; }
-  else {
-    sel.style.display="";
-    sel.innerHTML=CAT_OPTS[curCat].map(k=>`<option value="${k}">${getInd(k).name}</option>`).join("");
+  if(curCat==="月均人力"){
+    sel.style.display="none";
+    wrap.style.display="none";
+    toggle.style.display="none";
+  } else {
+    const opts=CAT_OPTS[curCat].map(k=>({value:k,text:getInd(k).name}));
+    sel.innerHTML=opts.map(o=>`<option value="${o.value}">${o.text}</option>`).join("");
     sel.value=catState[curCat].sel;
+    dropdown.innerHTML=opts.map(o=>`<div class="sel-option" data-value="${o.value}">${o.text}</div>`).join("");
+    triggerText.textContent=opts.find(o=>o.value===catState[curCat].sel)?.text || "";
+    dropdown.querySelectorAll(".sel-option").forEach(el=>el.classList.toggle("selected",el.dataset.value===catState[curCat].sel));
+    sel.style.display="none";
+    wrap.style.display="";
     if(curCat==="各C人力"){ toggle.style.display=""; document.querySelectorAll(".mode-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===catState[curCat].mode)); }
     else toggle.style.display="none";
   }
@@ -1806,6 +1829,29 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   };
 });
 document.getElementById("selInd").onchange=e=>{ catState[curCat].sel=e.target.value; buildCompare(); };
+(function(){
+  const trigger=document.getElementById("selIndTrigger");
+  const dropdown=document.getElementById("selIndDropdown");
+  const wrap=document.getElementById("selIndWrap");
+  if(!trigger || !dropdown) return;
+  trigger.addEventListener("click", e=>{
+    e.stopPropagation();
+    dropdown.classList.toggle("open");
+  });
+  dropdown.addEventListener("click", e=>{
+    const opt=e.target.closest(".sel-option");
+    if(!opt) return;
+    const sel=document.getElementById("selInd");
+    sel.value=opt.dataset.value;
+    sel.dispatchEvent(new Event("change"));
+    document.getElementById("selIndText").textContent=opt.textContent;
+    dropdown.querySelectorAll(".sel-option").forEach(el=>el.classList.toggle("selected",el===opt));
+    dropdown.classList.remove("open");
+  });
+  document.addEventListener("click", e=>{
+    if(!wrap.contains(e.target)) dropdown.classList.remove("open");
+  });
+})();
 document.querySelectorAll(".mode-btn").forEach(b=>{
   b.onclick=()=>{ catState[curCat].mode=b.dataset.mode; document.querySelectorAll(".mode-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); buildCompare(); };
 });
